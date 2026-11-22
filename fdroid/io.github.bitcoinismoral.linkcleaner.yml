@@ -5,18 +5,18 @@ Categories:
   - System
 License: GPL-3.0-only
 AuthorName: bitcoinismoral
-SourceCode: https://github.com/bitcoinismoral/LinkCleaner
-IssueTracker: https://github.com/bitcoinismoral/LinkCleaner/issues
+SourceCode: https://github.com/bitcoinismoral/SurveillanceSlopRemover
+IssueTracker: https://github.com/bitcoinismoral/SurveillanceSlopRemover/issues
 
-AutoName: Link Cleaner
+AutoName: Surveillance Slop Remover
 
 RepoType: git
-Repo: https://github.com/bitcoinismoral/LinkCleaner.git
+Repo: https://github.com/bitcoinismoral/SurveillanceSlopRemover.git
 
 Builds:
-  - versionName: '3.0'
-    versionCode: 4
-    commit: v3.0
+  - versionName: '3.1'
+    versionCode: 5
+    commit: v3.1
     subdir: android
     gradle:
       - yes
@@ -24,5 +24,5 @@ Builds:
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
 UpdateCheckData: android/build.gradle|versionCode\s(\d+)|.|versionName\s'([^']+)'
-CurrentVersion: '3.0'
-CurrentVersionCode: 4
+CurrentVersion: '3.1'
+CurrentVersionCode: 5

@@ -1,1 +1,1 @@
-Strips tracking from links you copy, tap & share, and metadata from photos
+Removes tracking from links you copy, tap & share, and metadata from photos

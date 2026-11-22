@@ -22,7 +22,7 @@ final class Browsers {
     private static final String ACTION_VIEW = "android.intent.action.VIEW";
     private static final String CATEGORY_BROWSABLE = "android.intent.category.BROWSABLE";
 
-    /** A browser that can open web links (never Link Cleaner itself). */
+    /** A browser that can open web links (never Surveillance Slop Remover itself). */
     static final class Browser {
         final String packageName; final String label;
         Browser(String packageName, String label) { this.packageName = packageName; this.label = label; }
@@ -73,7 +73,7 @@ final class Browsers {
         Intent view = new Intent(ACTION_VIEW, Uri.parse(url))
                 .addCategory(CATEGORY_BROWSABLE)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        view.setPackage(pkg); // explicit target, so it can never loop back to Link Cleaner
+        view.setPackage(pkg); // explicit target, so it can never loop back to Surveillance Slop Remover
         ctx.startActivity(view);
         return true;
     }

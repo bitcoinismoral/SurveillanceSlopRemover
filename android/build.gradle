@@ -11,8 +11,8 @@ android {
         minSdk 29
         targetSdk 34
         // keep in sync with VERSION_CODE / VERSION_NAME in buildtools/ResEncoder.java (CI checks this)
-        versionCode 4
-        versionName '3.0'
+        versionCode 5
+        versionName '3.1'
     }
 
     sourceSets {

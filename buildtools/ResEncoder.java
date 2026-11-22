@@ -15,8 +15,8 @@ import java.util.*;
 public class ResEncoder {
 
     static final String PKG = "io.github.bitcoinismoral.linkcleaner";
-    static final int VERSION_CODE = 4;
-    static final String VERSION_NAME = "3.0";
+    static final int VERSION_CODE = 5;
+    static final String VERSION_NAME = "3.1";
 
     // ---- framework attribute IDs (public-final.xml)
     static final Map<String, Integer> IDS = new HashMap<>();
@@ -87,9 +87,9 @@ public class ResEncoder {
             // package visibility (Android 11+): lets the link opener find your real browsers
             e("queries").k(e("intent").k(action("android.intent.action.VIEW"),
                 category("android.intent.category.BROWSABLE"), e("data").a("scheme", "https"))),
-            e("application").a("label", "Link Cleaner").ref("icon", R_IC_LAUNCHER).a("allowBackup", false).k(
+            e("application").a("label", "Surveillance Slop Remover").ref("icon", R_IC_LAUNCHER).a("allowBackup", false).k(
                 e("activity").a("name", cls("MainActivity")).a("exported", true)
-                    .a("label", "Link Cleaner").ref("theme", THEME_DEVICE_DEFAULT_DAYNIGHT).k(
+                    .a("label", "Surveillance Slop Remover").ref("theme", THEME_DEVICE_DEFAULT_DAYNIGHT).k(
                     e("intent-filter").k(action("android.intent.action.MAIN"), category("android.intent.category.LAUNCHER"))),
                 e("activity").a("name", cls("CleanActivity")).a("exported", true)
                     .a("label", "Clean links").a("excludeFromRecents", true).a("noHistory", true)
@@ -100,7 +100,7 @@ public class ResEncoder {
                         category("android.intent.category.DEFAULT"), mime("text/plain"))),
                 // link opener: offered as a browser so it can be set as the default for web links
                 e("activity").a("name", cls("OpenLinkActivity")).a("exported", true)
-                    .a("label", "Link Cleaner").a("excludeFromRecents", true).a("noHistory", true)
+                    .a("label", "Surveillance Slop Remover").a("excludeFromRecents", true).a("noHistory", true)
                     .a("taskAffinity", "").ref("theme", THEME_TRANSLUCENT_NOTITLEBAR).k(
                     e("intent-filter").k(action("android.intent.action.VIEW"),
                         category("android.intent.category.DEFAULT"), category("android.intent.category.BROWSABLE"),
@@ -120,7 +120,7 @@ public class ResEncoder {
                     .a("permission", "android.permission.BIND_QUICK_SETTINGS_TILE").k(
                     e("intent-filter").k(action("android.service.quicksettings.action.QS_TILE"))),
                 e("service").a("name", cls("CopyWatcherService")).a("exported", true)
-                    .a("label", "Link Cleaner — auto-clean copied links")
+                    .a("label", "Surveillance Slop Remover — auto-clean copied links")
                     .a("permission", "android.permission.BIND_ACCESSIBILITY_SERVICE").k(
                     e("intent-filter").k(action("android.accessibilityservice.AccessibilityService")))));
     }

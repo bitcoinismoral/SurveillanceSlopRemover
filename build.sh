@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Link Cleaner — open-source-only build (no proprietary Android SDK components).
+# Surveillance Slop Remover — open-source-only build (no proprietary Android SDK components).
 #   javac  : any OpenJDK 17+ (Azul Zulu on macOS)               — GPLv2 + Classpath Exception
 #   d8     : R8/D8 from r8.googlesource.com (Google Maven)       — BSD-3 / Apache-2.0
 #   signing: apksig from AOSP (Google Maven)                     — Apache-2.0
@@ -10,7 +10,7 @@ ROOT="$HOME/XLinkCleaner-build"
 SRC="$(cd "$(dirname "$0")" && pwd)"   # this repository
 OSS="$ROOT/oss"
 OUT="$ROOT/oss-out"
-APK="$ROOT/LinkCleaner.apk"
+APK="$ROOT/SurveillanceSlopRemover.apk"
 export JAVA_HOME="$(echo $ROOT/tools/jdk/zulu*/zulu-17.jdk/Contents/Home)"
 export PATH="$JAVA_HOME/bin:$PATH"
 rm -rf "$OUT"; mkdir -p "$OUT"/{stubs,classes,dex,bt,test,apk}

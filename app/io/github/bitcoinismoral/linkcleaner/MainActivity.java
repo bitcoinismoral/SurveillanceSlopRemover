@@ -30,18 +30,18 @@ public class MainActivity extends Activity {
             + "then come back — the option appears after that. Installing from F-Droid skips this step.";
     private static final String STEP_2 =
             "Step 2 — Switch it on\n"
-            + "Tap the button → \"Downloaded apps\" (or \"Installed apps\") → Link Cleaner "
-            + "→ turn on \"Use Link Cleaner\" → Allow. Leave the shortcut / floating button off.";
+            + "Tap the button → \"Downloaded apps\" (or \"Installed apps\") → Surveillance Slop Remover "
+            + "→ turn on \"Use Surveillance Slop Remover\" → Allow. Leave the shortcut / floating button off.";
     private static final String COPY_ON =
             "Every link you copy is cleaned automatically within a split second.";
     private static final String STUCK =
             "Android has it switched on, but it isn't running yet. Open the settings below and turn "
-            + "\"Use Link Cleaner\" off and on again. If it keeps happening, restart the phone.";
+            + "\"Use Surveillance Slop Remover\" off and on again. If it keeps happening, restart the phone.";
 
     // ---- link opener
     private static final String OPENER_OFF =
-            "Make Link Cleaner your default browser app. Links you tap in any app are cleaned and "
-            + "opened in your real browser instantly — you won't see Link Cleaner at all.";
+            "Make Surveillance Slop Remover your default browser app. Links you tap in any app are cleaned and "
+            + "opened in your real browser instantly — you won't see it at all.";
     private static final String OPENER_ON =
             "Links you tap in other apps are cleaned, then opened in your browser.";
 
@@ -90,7 +90,7 @@ public class MainActivity extends Activity {
         col.setPadding(PAD, PAD, PAD, PAD);
 
         TextView title = text(28f, 0, 0);
-        title.setText("Link Cleaner");
+        title.setText("Surveillance Slop Remover");
         col.addView(title);
 
         // ---------------- 1. automatic copy cleaning
@@ -99,7 +99,7 @@ public class MainActivity extends Activity {
         note = text(14f, 0, 0);
         step1 = text(14f, PAD / 2, 0);
         step1.setText(STEP_1);
-        step1Button = button("Open Link Cleaner app info", new View.OnClickListener() {
+        step1Button = button("Open app info", new View.OnClickListener() {
             @Override public void onClick(View v) { openAppInfo(); }
         });
         step2 = text(14f, PAD / 2, 0);
@@ -118,7 +118,7 @@ public class MainActivity extends Activity {
         col.addView(header("Link opener"));
         openerStatus = text(17f, PAD / 4, PAD / 4);
         openerNote = text(14f, 0, 0);
-        openerButton = button("Make Link Cleaner the link opener", new View.OnClickListener() {
+        openerButton = button("Make it the link opener", new View.OnClickListener() {
             @Override public void onClick(View v) { requestBrowserRole(); }
         });
         browserLabel = text(14f, PAD / 2, 0);

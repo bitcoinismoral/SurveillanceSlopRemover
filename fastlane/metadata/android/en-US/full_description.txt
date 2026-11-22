@@ -1,10 +1,10 @@
-<p>Link Cleaner removes surveillance junk from links and photos, automatically and completely offline. It has <b>no internet permission</b>, so nothing you clean can ever leave your phone.</p>
+<p>Surveillance Slop Remover removes surveillance junk from links and photos, automatically and completely offline. It has <b>no internet permission</b>, so nothing you clean can ever leave your phone.</p>
 
 <p><b>Automatic copy cleaning</b><br/>
 Copy a link anywhere and it's cleaned on your clipboard within a split second, before you paste it. No need to open the app.</p>
 
 <p><b>Link opener</b><br/>
-Set Link Cleaner as your default browser app: every link you tap in other apps is cleaned and handed straight to your real browser (Vanadium, Firefox, …). You never see it.</p>
+Set Surveillance Slop Remover as your default browser app: every link you tap in other apps is cleaned and handed straight to your real browser (Vanadium, Firefox, …). You never see it.</p>
 
 <p><b>Photo metadata remover</b><br/>
 Share a photo → "Remove photo metadata" → choose where to send it. Strips GPS location, phone model, timestamps, edit history and embedded Motion Photo video. JPEG, PNG and WebP keep their exact original quality (no re-compression); rotation and colour profile are kept. Your original is never changed.</p>

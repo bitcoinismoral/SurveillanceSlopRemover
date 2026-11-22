@@ -7,7 +7,7 @@ import android.os.Bundle;
 import android.widget.Toast;
 
 /**
- * Link opener: set Link Cleaner as the default browser and every link you tap in any app comes
+ * Link opener: set Surveillance Slop Remover as the default browser and every link you tap in any app comes
  * here first. It strips the tracking and immediately hands the clean link to your real browser
  * (Vanadium by default). No screen is shown; it takes a few milliseconds.
  */

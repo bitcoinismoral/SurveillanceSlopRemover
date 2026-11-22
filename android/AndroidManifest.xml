@@ -12,13 +12,13 @@
         </intent>
     </queries>
     <application
-        android:label="Link Cleaner"
+        android:label="Surveillance Slop Remover"
         android:icon="@drawable/ic_launcher"
         android:allowBackup="false">
         <activity
             android:name="io.github.bitcoinismoral.linkcleaner.MainActivity"
             android:exported="true"
-            android:label="Link Cleaner"
+            android:label="Surveillance Slop Remover"
             android:theme="@android:style/Theme.DeviceDefault.DayNight">
             <intent-filter>
                 <action
@@ -57,7 +57,7 @@
         <activity
             android:name="io.github.bitcoinismoral.linkcleaner.OpenLinkActivity"
             android:exported="true"
-            android:label="Link Cleaner"
+            android:label="Surveillance Slop Remover"
             android:excludeFromRecents="true"
             android:noHistory="true"
             android:taskAffinity=""
@@ -120,7 +120,7 @@
         <service
             android:name="io.github.bitcoinismoral.linkcleaner.CopyWatcherService"
             android:exported="true"
-            android:label="Link Cleaner — auto-clean copied links"
+            android:label="Surveillance Slop Remover — auto-clean copied links"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
                 <action

@@ -1,6 +1,6 @@
-<p align="center"><img src="art/fdroid-icon-512.png" width="128" alt="Link Cleaner icon"></p>
+<p align="center"><img src="art/fdroid-icon-512.png" width="128" alt="Surveillance Slop Remover icon"></p>
 
-# Link Cleaner
+# Surveillance Slop Remover
 
 Removes surveillance junk from links and photos on Android — automatically, offline, with **no internet permission**.
 
