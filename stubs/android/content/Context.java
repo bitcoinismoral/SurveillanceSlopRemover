@@ -3,6 +3,7 @@ package android.content;
 public abstract class Context {
     public static final String CLIPBOARD_SERVICE = "clipboard";
     public static final int MODE_PRIVATE = 0;
+    public static final String WINDOW_SERVICE = "window";
     public Object getSystemService(String name) { throw new RuntimeException("stub"); }
     public void startActivity(Intent intent) { throw new RuntimeException("stub"); }
     public ContentResolver getContentResolver() { throw new RuntimeException("stub"); }

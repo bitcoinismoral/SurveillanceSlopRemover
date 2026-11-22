@@ -2,18 +2,23 @@ package io.github.bitcoinismoral.linkcleaner;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
-import android.content.Intent;
+import android.content.Context;
+import android.graphics.PixelFormat;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.Gravity;
+import android.view.View;
+import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
+import android.widget.Toast;
 
 import java.util.List;
 import java.util.Locale;
 
 /**
- * Makes cleaning automatic: notices the moment you copy something, then briefly opens the
- * invisible CleanActivity (the only way Android 10+ allows reading the clipboard), which
- * cleans it and closes. You keep copying and pasting exactly as before.
+ * Makes cleaning automatic: notices the moment you copy something, then briefly adds an
+ * invisible 1x1 overlay that takes window focus (the only way Android 10+ allows reading the
+ * clipboard), cleans it and removes itself. You keep copying and pasting exactly as before.
  *
  * Privacy: it can NOT read screen contents (canRetrieveWindowContent is off). It only receives
  * three event types and looks at nothing but the short label of what was tapped:
@@ -92,8 +97,10 @@ public class CopyWatcherService extends AccessibilityService {
         if (type == AccessibilityEvent.TYPE_VIEW_CLICKED) {
             trigger = mentionsCopy(labelOf(event));
         } else if (SYSTEM_UI.equals(pkg)) {
-            String label = labelOf(event);
-            trigger = mentionsCopy(label) || label.contains("clipboard");
+            // Android's own "Text copied" popup/announcement. No length limit here: the popup can
+            // include a preview of what was copied, which made long links get ignored before 3.2.
+            String text = fullText(event);
+            trigger = mentionsCopy(text) || text.contains("clipboard");
         } else {
             trigger = false;
         }
@@ -108,16 +115,78 @@ public class CopyWatcherService extends AccessibilityService {
         }, 300); // let the app finish writing the clipboard
     }
 
+    /**
+     * Cleans the clipboard without starting an activity.
+     *
+     * Bug fixed in 3.2: this used to start CleanActivity, but since Android 14 a background
+     * activity start from an accessibility service is silently blocked (the system's binding only
+     * grants it while the binder has a visible window — see BackgroundLaunchProcessController
+     * .isBoundByForegroundUid in AOSP), so nothing happened.
+     *
+     * Instead we add a 1x1 invisible, untouchable TYPE_ACCESSIBILITY_OVERLAY window (allowed for
+     * accessibility services without any extra permission). It is focusable, so it receives window
+     * focus — which is exactly what ClipboardService requires (isUidFocused) — then cleans the
+     * clipboard and removes itself. FLAG_ALT_FOCUSABLE_IM keeps it from taking over the keyboard.
+     */
     private void launchCleaner() {
-        Intent i = new Intent(this, CleanActivity.class)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NO_ANIMATION
-                        | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
-                .putExtra(CleanActivity.EXTRA_AUTO, true);
+        final WindowManager wm;
         try {
-            startActivity(i);
-        } catch (Throwable ignored) {
-            // e.g. device locked; nothing to do
+            wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
+        } catch (Throwable t) {
+            return;
         }
+        if (wm == null) return;
+        final boolean[] finished = {false};
+        final View probe = new View(this) {
+            @Override
+            public void onWindowFocusChanged(boolean hasWindowFocus) {
+                super.onWindowFocusChanged(hasWindowFocus);
+                if (!hasWindowFocus || finished[0]) return;
+                finished[0] = true;
+                try {
+                    ClipboardHelper.Outcome o = ClipboardHelper.cleanClipboard(CopyWatcherService.this);
+                    if (o.changed) Toast.makeText(CopyWatcherService.this, o.message, Toast.LENGTH_SHORT).show();
+                } catch (Throwable ignored) {
+                }
+                removeQuietly(wm, this);
+            }
+        };
+        WindowManager.LayoutParams lp = new WindowManager.LayoutParams(1, 1,
+                WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                        | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                        | WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM,
+                PixelFormat.TRANSLUCENT);
+        lp.gravity = Gravity.TOP | Gravity.LEFT;
+        try {
+            wm.addView(probe, lp);
+        } catch (Throwable t) {
+            return;
+        }
+        // Safety net: never leave the overlay behind, even if focus never arrives.
+        handler.postDelayed(new Runnable() {
+            @Override public void run() {
+                finished[0] = true;
+                removeQuietly(wm, probe);
+            }
+        }, 1500);
+    }
+
+    private static void removeQuietly(WindowManager wm, View v) {
+        try {
+            wm.removeView(v);
+        } catch (Throwable ignored) {
+            // already removed
+        }
+    }
+
+    private static String fullText(AccessibilityEvent e) {
+        StringBuilder b = new StringBuilder();
+        List<CharSequence> texts = e.getText();
+        if (texts != null) for (CharSequence t : texts) if (t != null) b.append(t).append(' ');
+        CharSequence d = e.getContentDescription();
+        if (d != null) b.append(d);
+        return b.toString().toLowerCase(Locale.ROOT);
     }
 
     private static String labelOf(AccessibilityEvent e) {
@@ -132,7 +201,8 @@ public class CopyWatcherService extends AccessibilityService {
     }
 
     private static boolean mentionsCopy(String label) {
-        if (label.isEmpty() || label.contains("copyright")) return false;
+        if (label.isEmpty()) return false;
+        label = label.replace("copyright", "");
         for (String w : COPY_WORDS) if (label.contains(w)) return true;
         return false;
     }

@@ -1,0 +1,2 @@
+• Fix: automatic copy cleaning now works on Android 14 and newer (incl. GrapheneOS). Android silently blocked the old method; it now uses a tiny invisible accessibility overlay instead.
+• Fix: long copied links no longer slip past the copy detection

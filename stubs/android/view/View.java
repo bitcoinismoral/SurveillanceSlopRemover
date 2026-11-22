@@ -14,4 +14,5 @@ public class View {
     public static final int VISIBLE = 0;
     public static final int GONE = 8;
     public void setVisibility(int visibility) { throw new RuntimeException("stub"); }
+    public void onWindowFocusChanged(boolean hasWindowFocus) { throw new RuntimeException("stub"); }
 }
