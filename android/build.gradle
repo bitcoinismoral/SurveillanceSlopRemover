@@ -1,0 +1,46 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'io.github.bitcoinismoral.linkcleaner'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'io.github.bitcoinismoral.linkcleaner'
+        minSdk 29
+        targetSdk 34
+        // keep in sync with VERSION_CODE / VERSION_NAME in buildtools/ResEncoder.java (CI checks this)
+        versionCode 4
+        versionName '3.0'
+    }
+
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'   // generated from buildtools/ResEncoder.java
+            java.srcDirs = ['../app']
+            res.srcDirs = ['../res']
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    // No Google-encrypted dependency blob in the APK (F-Droid requirement for reproducible builds)
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+
+    lint {
+        abortOnError false
+    }
+}

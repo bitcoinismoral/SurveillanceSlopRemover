@@ -1,0 +1,18 @@
+// Standard Gradle build (used by F-Droid's build servers and by CI).
+// The app can also be built without Gradle or Google's SDK bundle: see build.sh.
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+rootProject.name = "LinkCleaner"
+include(":android")

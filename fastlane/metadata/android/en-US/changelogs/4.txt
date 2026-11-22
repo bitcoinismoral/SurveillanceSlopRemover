@@ -1,0 +1,5 @@
+• New: link opener (set as default browser to clean every link you tap)
+• New: photo metadata remover (lossless for JPEG, PNG, WebP)
+• New icon, adaptive + themed
+• X search links keep their search terms
+• Safer rules: fewer false positives on Facebook, Reddit, Amazon, Apple

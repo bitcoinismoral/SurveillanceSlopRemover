@@ -1,0 +1,25 @@
+<p>Link Cleaner removes surveillance junk from links and photos, automatically and completely offline. It has <b>no internet permission</b>, so nothing you clean can ever leave your phone.</p>
+
+<p><b>Automatic copy cleaning</b><br/>
+Copy a link anywhere and it's cleaned on your clipboard within a split second, before you paste it. No need to open the app.</p>
+
+<p><b>Link opener</b><br/>
+Set Link Cleaner as your default browser app: every link you tap in other apps is cleaned and handed straight to your real browser (Vanadium, Firefox, …). You never see it.</p>
+
+<p><b>Photo metadata remover</b><br/>
+Share a photo → "Remove photo metadata" → choose where to send it. Strips GPS location, phone model, timestamps, edit history and embedded Motion Photo video. JPEG, PNG and WebP keep their exact original quality (no re-compression); rotation and colour profile are kept. Your original is never changed.</p>
+
+<p><b>What gets removed from links</b></p>
+<ul>
+<li>X / Twitter share trackers (<i>?s=…&amp;t=…</i>), search terms kept</li>
+<li>YouTube <i>si</i>, <i>pp</i>, <i>feature</i> (timestamps and playlists kept)</li>
+<li>AI-assistant tags on cited sources: <i>utm_source=chatgpt.com</i>, Perplexity, Gemini, Copilot, plus <i>#:~:text=</i> highlight fragments</li>
+<li>Ad click IDs: fbclid, gclid, msclkid, ttclid, twclid and more</li>
+<li>Instagram, Threads, Facebook, TikTok, Reddit, LinkedIn, Spotify, Apple, Amazon, eBay, Google &amp; Bing search, newsletters (Mailchimp, HubSpot, Substack…)</li>
+<li>Redirect wrappers (google.com/url, l.facebook.com, YouTube and Outlook redirects) are unwrapped to the real destination</li>
+</ul>
+
+<p>Also available: a Quick Settings tile, Share → "Clean links", and Select text → "Clean links".</p>
+
+<p><b>About the accessibility service</b><br/>
+Since Android 10 only the visible app can read the clipboard, so automatic copy cleaning uses an accessibility service. It is configured so it <b>cannot read screen content</b>: it only receives the label of the button you tap (e.g. "Copy link") and Android's own "Copied" notice, then briefly opens an invisible window to clean the clipboard. It is optional; every other feature works without it.</p>

@@ -1,0 +1,28 @@
+# Metadata for F-Droid's index (to be submitted as a merge request to gitlab.com/fdroid/fdroiddata,
+# saved there as metadata/io.github.bitcoinismoral.linkcleaner.yml).
+Categories:
+  - Security
+  - System
+License: GPL-3.0-only
+AuthorName: bitcoinismoral
+SourceCode: https://github.com/bitcoinismoral/LinkCleaner
+IssueTracker: https://github.com/bitcoinismoral/LinkCleaner/issues
+
+AutoName: Link Cleaner
+
+RepoType: git
+Repo: https://github.com/bitcoinismoral/LinkCleaner.git
+
+Builds:
+  - versionName: '3.0'
+    versionCode: 4
+    commit: v3.0
+    subdir: android
+    gradle:
+      - yes
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+UpdateCheckData: android/build.gradle|versionCode\s(\d+)|.|versionName\s'([^']+)'
+CurrentVersion: '3.0'
+CurrentVersionCode: 4
