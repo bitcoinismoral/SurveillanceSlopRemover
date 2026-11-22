@@ -32,6 +32,11 @@ public class MainActivity extends Activity {
             "Step 2 — Switch it on\n"
             + "Tap the button → \"Downloaded apps\" (or \"Installed apps\") → Surveillance Slop Remover "
             + "→ turn on \"Use Surveillance Slop Remover\" → Allow. Leave the shortcut / floating button off.";
+    private static final String STEP_3 =
+            "Step 3 \u2014 GrapheneOS only: allow clipboard access\n"
+            + "GrapheneOS's Secure Paste can block apps from reading what other apps copied, which "
+            + "stops automatic cleaning. Tap the button \u2192 turn on clipboard access for this app "
+            + "(the per-app clipboard / Secure Paste toggle). If you never changed it, it's already allowed.";
     private static final String COPY_ON =
             "Every link you copy is cleaned automatically within a split second.";
     private static final String STUCK =
@@ -114,6 +119,12 @@ public class MainActivity extends Activity {
         col.addView(step1Button);
         col.addView(step2);
         col.addView(step2Button);
+        TextView step3 = text(14f, PAD / 2, 0);
+        step3.setText(STEP_3);
+        col.addView(step3);
+        col.addView(button("Open app info (clipboard access)", new View.OnClickListener() {
+            @Override public void onClick(View v) { openAppInfo(); }
+        }));
 
         // ---------------- 2. link opener
         col.addView(header("Link opener"));
@@ -291,6 +302,11 @@ public class MainActivity extends Activity {
     private void runClipboardClean() {
         ClipboardHelper.Outcome o = ClipboardHelper.cleanClipboard(this);
         CharSequence now = ClipboardHelper.read(this);
-        status.setText(now != null && now.length() > 0 ? o.message + "\n" + now : o.message);
+        if (o.unreadable) {
+            status.setText("Clipboard looks empty. If you did copy something, clipboard access is blocked "
+                    + "for this app \u2014 see Step 3 above.");
+        } else {
+            status.setText(now != null && now.length() > 0 ? o.message + "\n" + now : o.message);
+        }
     }
 }

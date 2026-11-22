@@ -15,8 +15,8 @@ import java.util.*;
 public class ResEncoder {
 
     static final String PKG = "io.github.bitcoinismoral.linkcleaner";
-    static final int VERSION_CODE = 7;
-    static final String VERSION_NAME = "3.3";
+    static final int VERSION_CODE = 8;
+    static final String VERSION_NAME = "3.4";
 
     // ---- framework attribute IDs (public-final.xml)
     static final Map<String, Integer> IDS = new HashMap<>();

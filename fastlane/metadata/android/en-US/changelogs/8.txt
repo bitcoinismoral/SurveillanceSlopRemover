@@ -1,0 +1,3 @@
+• Detects when GrapheneOS Secure Paste blocks clipboard access and tells you how to allow it
+• Also detects copies announced by "Copied" toasts
+• Shows a message instead of failing silently when Android doesn't allow the clipboard read

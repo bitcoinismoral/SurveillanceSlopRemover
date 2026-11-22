@@ -30,6 +30,9 @@ public class CopyWatcherService extends AccessibilityService {
 
     static volatile boolean running = false;
 
+    static final String BLOCKED_MSG = "Surveillance Slop Remover can't read the clipboard. On GrapheneOS: "
+            + "Settings \u2192 Apps \u2192 Surveillance Slop Remover \u2192 turn on clipboard access (Secure Paste).";
+
     // ---- diagnostics: last few steps, in memory only (never stored or sent), shown in the app
     private static final java.util.ArrayDeque<String> LOG = new java.util.ArrayDeque<>();
 
@@ -82,6 +85,7 @@ public class CopyWatcherService extends AccessibilityService {
             AccessibilityServiceInfo info = new AccessibilityServiceInfo();
             info.eventTypes = AccessibilityEvent.TYPE_VIEW_CLICKED
                     | AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
+                    | AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED // "Copied" toasts
                     | AccessibilityEvent.TYPE_ANNOUNCEMENT;
             info.feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC;
             info.notificationTimeout = 100;
@@ -123,6 +127,10 @@ public class CopyWatcherService extends AccessibilityService {
         boolean trigger;
         if (type == AccessibilityEvent.TYPE_VIEW_CLICKED) {
             trigger = mentionsCopy(labelOf(event));
+        } else if (type == AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED) {
+            // toasts such as "Copied", "Copied to clipboard", "Link copied" (system or the app's own)
+            String label = labelOf(event);
+            trigger = label.contains("copied") || label.contains("clipboard");
         } else if (SYSTEM_UI.equals(pkg)) {
             // Android's own "Text copied" popup/announcement. No length limit here: the popup can
             // include a preview of what was copied, which made long links get ignored before 3.2.
@@ -175,7 +183,13 @@ public class CopyWatcherService extends AccessibilityService {
                 try {
                     ClipboardHelper.Outcome o = ClipboardHelper.cleanClipboard(CopyWatcherService.this);
                     log("overlay got focus -> " + o.message);
-                    if (o.changed) Toast.makeText(CopyWatcherService.this, o.message, Toast.LENGTH_SHORT).show();
+                    if (o.changed) {
+                        Toast.makeText(CopyWatcherService.this, o.message, Toast.LENGTH_SHORT).show();
+                    } else if (o.unreadable) {
+                        // Something was just copied, so an empty read means access is blocked.
+                        log("clipboard access is blocked for this app");
+                        Toast.makeText(CopyWatcherService.this, BLOCKED_MSG, Toast.LENGTH_LONG).show();
+                    }
                 } catch (Throwable t) {
                     log("clipboard read failed: " + t);
                 }
@@ -198,7 +212,12 @@ public class CopyWatcherService extends AccessibilityService {
         // Safety net: never leave the overlay behind, even if focus never arrives.
         handler.postDelayed(new Runnable() {
             @Override public void run() {
-                if (!finished[0]) log("overlay never got focus (timed out)");
+                if (!finished[0]) {
+                    log("overlay never got focus (timed out)");
+                    Toast.makeText(CopyWatcherService.this,
+                            "Surveillance Slop Remover: Android didn't let it read the clipboard this time (no focus)",
+                            Toast.LENGTH_SHORT).show();
+                }
                 finished[0] = true;
                 removeQuietly(wm, probe);
             }
