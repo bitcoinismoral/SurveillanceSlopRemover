@@ -1,0 +1,3 @@
+• Fix: automatic copy cleaning now receives Android's "Text copied" signal (it was being filtered out)
+• Fix: works on Android 14+ without opening a window (tiny invisible overlay instead)
+• New: Diagnostics section shows what automatic cleaning did most recently

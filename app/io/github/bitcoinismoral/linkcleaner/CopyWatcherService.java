@@ -30,6 +30,26 @@ public class CopyWatcherService extends AccessibilityService {
 
     static volatile boolean running = false;
 
+    // ---- diagnostics: last few steps, in memory only (never stored or sent), shown in the app
+    private static final java.util.ArrayDeque<String> LOG = new java.util.ArrayDeque<>();
+
+    static void log(String msg) {
+        String line = new java.text.SimpleDateFormat("HH:mm:ss", Locale.ROOT).format(new java.util.Date()) + "  " + msg;
+        synchronized (LOG) {
+            LOG.addFirst(line);
+            while (LOG.size() > 10) LOG.removeLast();
+        }
+    }
+
+    static String recentLog() {
+        synchronized (LOG) {
+            if (LOG.isEmpty()) return "(nothing yet — copy a link, then come back here)";
+            StringBuilder b = new StringBuilder();
+            for (String l : LOG) b.append(l).append('\n');
+            return b.toString().trim();
+        }
+    }
+
     /** True if the user has switched the service on in Android's settings (even if not bound yet). */
     static boolean isEnabledInSettings(android.content.Context ctx) {
         try {
@@ -65,11 +85,18 @@ public class CopyWatcherService extends AccessibilityService {
                     | AccessibilityEvent.TYPE_ANNOUNCEMENT;
             info.feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC;
             info.notificationTimeout = 100;
-            info.flags = 0;
+            // Bug fixed in 3.3: without this flag Android drops events from views it considers
+            // "not important for accessibility" (AbstractAccessibilityServiceConnection
+            // .clientWantsEventLocked). SystemUI announces "Text copied" from the clipboard
+            // overlay's root layout, which is exactly such a view, so the main copy signal never
+            // reached us. Still no window-content access: canRetrieveWindowContent stays off.
+            info.flags = AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS;
             setServiceInfo(info);
-        } catch (Throwable ignored) {
+        } catch (Throwable t) {
+            log("setServiceInfo failed: " + t);
         }
         running = true;
+        log("service connected");
     }
 
     /** Called right before we write the clipboard ourselves, so the echo doesn't loop. */
@@ -107,7 +134,9 @@ public class CopyWatcherService extends AccessibilityService {
         if (!trigger) return;
 
         long now = System.currentTimeMillis();
-        if (now < quietUntil) return;
+        if (now < quietUntil) { log("copy signal ignored (just cleaned)"); return; }
+        log("copy detected via " + (type == AccessibilityEvent.TYPE_VIEW_CLICKED ? "tap in " + pkg
+                : type == AccessibilityEvent.TYPE_ANNOUNCEMENT ? "Android 'copied' announcement" : "Android 'copied' popup"));
         quietUntil = now + 1500; // one clean per copy, even if several signals arrive
 
         handler.postDelayed(new Runnable() {
@@ -135,7 +164,7 @@ public class CopyWatcherService extends AccessibilityService {
         } catch (Throwable t) {
             return;
         }
-        if (wm == null) return;
+        if (wm == null) { log("no WindowManager"); return; }
         final boolean[] finished = {false};
         final View probe = new View(this) {
             @Override
@@ -145,8 +174,10 @@ public class CopyWatcherService extends AccessibilityService {
                 finished[0] = true;
                 try {
                     ClipboardHelper.Outcome o = ClipboardHelper.cleanClipboard(CopyWatcherService.this);
+                    log("overlay got focus -> " + o.message);
                     if (o.changed) Toast.makeText(CopyWatcherService.this, o.message, Toast.LENGTH_SHORT).show();
-                } catch (Throwable ignored) {
+                } catch (Throwable t) {
+                    log("clipboard read failed: " + t);
                 }
                 removeQuietly(wm, this);
             }
@@ -161,11 +192,13 @@ public class CopyWatcherService extends AccessibilityService {
         try {
             wm.addView(probe, lp);
         } catch (Throwable t) {
+            log("overlay could not be added: " + t);
             return;
         }
         // Safety net: never leave the overlay behind, even if focus never arrives.
         handler.postDelayed(new Runnable() {
             @Override public void run() {
+                if (!finished[0]) log("overlay never got focus (timed out)");
                 finished[0] = true;
                 removeQuietly(wm, probe);
             }
@@ -212,6 +245,7 @@ public class CopyWatcherService extends AccessibilityService {
 
     @Override
     public void onDestroy() {
+        log("service stopped");
         running = false;
         super.onDestroy();
     }

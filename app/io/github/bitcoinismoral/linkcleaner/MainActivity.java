@@ -74,6 +74,7 @@ public class MainActivity extends Activity {
     private static final int REQ_BROWSER_ROLE = 7;
     private static final int PAD = 64;
 
+    private TextView diagnostics;
     private TextView status, autoStatus, step1, step2, note, openerStatus, openerNote, browserLabel;
     private Button step1Button, step2Button, openerButton;
     private LinearLayout browserList;
@@ -144,6 +145,14 @@ public class MainActivity extends Activity {
         col.addView(button("Clean clipboard now", new View.OnClickListener() {
             @Override public void onClick(View v) { runClipboardClean(); }
         }));
+        col.addView(header("Diagnostics"));
+        TextView diagNote = text(13f, PAD / 4, 0);
+        diagNote.setText("What automatic cleaning did most recently (kept in memory only, never saved or sent):");
+        col.addView(diagNote);
+        diagnostics = text(13f, PAD / 4, 0);
+        diagnostics.setTextIsSelectable(true);
+        col.addView(diagnostics);
+
         TextView how = text(14f, PAD, 0);
         how.setText(HOW_TO);
         col.addView(how);
@@ -190,6 +199,7 @@ public class MainActivity extends Activity {
     }
 
     private void refresh() {
+        diagnostics.setText(CopyWatcherService.recentLog());
         refreshCopyCleaning();
         refreshOpener();
     }
