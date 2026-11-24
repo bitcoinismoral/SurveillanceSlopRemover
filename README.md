@@ -11,6 +11,14 @@ Removes surveillance junk from links and photos on Android — automatically, of
 
 Built for [GrapheneOS](https://grapheneos.org), works on any Android 10+.
 
+## Download
+
+- **[Latest release](https://github.com/bitcoinismoral/SurveillanceSlopRemover/releases/latest)**: download the APK and open it on your phone.
+- **Automatic updates**: add `https://github.com/bitcoinismoral/SurveillanceSlopRemover` to [Obtainium](https://github.com/ImranR98/Obtainium). Installing through Obtainium also skips Android's "restricted setting" step for the accessibility service.
+- F-Droid: submission in progress.
+
+**After installing**, open the app and follow the steps under "Automatic copy cleaning", and optionally make it your link opener.
+
 ## What gets removed
 
 X/Twitter share trackers · YouTube `si`/`pp`/`feature` · AI-assistant tags on cited sources (`utm_source=chatgpt.com`, Perplexity, Gemini, Copilot) and `#:~:text=` fragments · `utm_*` · ad click IDs (`fbclid`, `gclid`, `msclkid`, `ttclid`, `twclid`, …) · e-mail marketing IDs (Mailchimp, HubSpot, Marketo, Substack) · per-site rules for Instagram, Threads, Facebook, TikTok, Reddit, LinkedIn, Spotify, Apple, Amazon, eBay, Google & Bing · redirect wrappers unwrapped. Functional parameters (search terms, timestamps, video IDs, page numbers) are kept. See [`LinkCleaner.java`](app/io/github/bitcoinismoral/linkcleaner/LinkCleaner.java) and its tests in [`buildtools/LinkCleanerTest.java`](buildtools/LinkCleanerTest.java).

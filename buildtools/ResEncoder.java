@@ -15,8 +15,8 @@ import java.util.*;
 public class ResEncoder {
 
     static final String PKG = "io.github.bitcoinismoral.linkcleaner";
-    static final int VERSION_CODE = 10;
-    static final String VERSION_NAME = "3.5.1";
+    static final int VERSION_CODE = 11;
+    static final String VERSION_NAME = "3.6";
 
     // ---- framework attribute IDs (public-final.xml)
     static final Map<String, Integer> IDS = new HashMap<>();
@@ -46,6 +46,8 @@ public class ResEncoder {
         IDS.put("notificationTimeout", 0x01010383);
         IDS.put("accessibilityFlags", 0x01010384);
         IDS.put("canRetrieveWindowContent", 0x01010385);
+        IDS.put("description", 0x01010020);
+        IDS.put("summary", 0x010101e9);
     }
     static final int THEME_DEVICE_DEFAULT_DAYNIGHT = 0x010302e3;
     static final int THEME_TRANSLUCENT_NOTITLEBAR = 0x01030010;
@@ -148,7 +150,13 @@ public class ResEncoder {
             .flags("accessibilityFeedbackType", 0x10, "feedbackGeneric")
             .flags("accessibilityFlags", 0x2, "flagIncludeNotImportantViews")
             .a("notificationTimeout", 100)
-            .a("canRetrieveWindowContent", true);
+            .a("canRetrieveWindowContent", true)
+            // Shown on Android's accessibility settings page and in the "allow" dialog.
+            .a("summary", "Removes tracking from links you copy and paste")
+            .a("description", "Removes tracking junk (like ?s=, si=, utm_ and fbclid) from links automatically. "
+                + "When you copy a link in an app, or paste one into a text box, the clean link replaces it.\n\n"
+                + "It only looks at \"Copy\" buttons, \"Copied\" notices and text you have just pasted. "
+                + "Surveillance Slop Remover has no internet permission, so nothing can leave your phone.");
     }
 
     static El adaptiveIcon() {
@@ -362,7 +370,8 @@ public class ResEncoder {
     static final Set<String> GRADLE_OWNED = new HashSet<>(Arrays.asList("package", "versionCode", "versionName"));
 
     static String escape(String v) {
-        return v.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
+        return v.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
+                .replace("\n", "\\n"); // aapt2 turns \n back into a line break
     }
 
     static void text(StringBuilder b, El el, int depth, boolean root) {

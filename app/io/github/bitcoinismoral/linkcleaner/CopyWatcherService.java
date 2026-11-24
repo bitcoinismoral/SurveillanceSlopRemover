@@ -32,6 +32,7 @@ public class CopyWatcherService extends AccessibilityService {
 
     static volatile boolean running = false;
     private static volatile boolean blockedWarned = false;
+    private static volatile boolean noFocusWarned = false;
 
     static final String BLOCKED_MSG = "Surveillance Slop Remover can't read the clipboard. On GrapheneOS: "
             + "Settings \u2192 Apps \u2192 Surveillance Slop Remover \u2192 turn on clipboard access (Secure Paste).";
@@ -225,6 +226,8 @@ public class CopyWatcherService extends AccessibilityService {
             @Override public void run() {
                 if (!finished[0]) {
                     log("overlay never got focus (timed out)");
+                    if (noFocusWarned) { finished[0] = true; removeQuietly(wm, probe); return; }
+                    noFocusWarned = true;
                     Toast.makeText(CopyWatcherService.this,
                             "Surveillance Slop Remover: Android didn't let it read the clipboard this time (no focus)",
                             Toast.LENGTH_SHORT).show();

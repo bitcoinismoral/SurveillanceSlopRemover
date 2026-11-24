@@ -5,4 +5,6 @@
     android:accessibilityFeedbackType="feedbackGeneric"
     android:accessibilityFlags="flagIncludeNotImportantViews"
     android:notificationTimeout="100"
-    android:canRetrieveWindowContent="true" />
+    android:canRetrieveWindowContent="true"
+    android:summary="Removes tracking from links you copy and paste"
+    android:description="Removes tracking junk (like ?s=, si=, utm_ and fbclid) from links automatically. When you copy a link in an app, or paste one into a text box, the clean link replaces it.\n\nIt only looks at &quot;Copy&quot; buttons, &quot;Copied&quot; notices and text you have just pasted. Surveillance Slop Remover has no internet permission, so nothing can leave your phone." />

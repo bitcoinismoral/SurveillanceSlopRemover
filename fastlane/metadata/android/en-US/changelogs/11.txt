@@ -1,0 +1,3 @@
+• Accessibility settings now explain what the service does
+• The main screen only shows your clipboard when it holds a link
+• Fewer repeated warnings

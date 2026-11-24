@@ -27,7 +27,8 @@ public class MainActivity extends Activity {
             + "Android blocks accessibility for apps installed from a file until you allow it. "
             + "Tap the button, then ⋮ (top right) → \"Allow restricted settings\" and confirm.\n"
             + "Don't see that option? Do Step 2 once first (Android will say it's restricted), "
-            + "then come back — the option appears after that. Installing from F-Droid skips this step.";
+            + "then come back — the option appears after that. Installing through Obtainium or "
+            + "F-Droid instead of from a downloaded file skips this step.";
     private static final String STEP_2 =
             "Step 2 — Switch it on\n"
             + "Tap the button → \"Downloaded apps\" (or \"Installed apps\") → Surveillance Slop Remover "
@@ -308,8 +309,10 @@ public class MainActivity extends Activity {
         if (o.unreadable) {
             status.setText("Clipboard looks empty. If you did copy something, clipboard access is blocked "
                     + "for this app \u2014 see Step 3 above.");
+        } else if (now != null && LinkCleaner.clean(now).linksFound > 0) {
+            status.setText(o.message + "\n" + now);   // only show the clipboard when it holds a link
         } else {
-            status.setText(now != null && now.length() > 0 ? o.message + "\n" + now : o.message);
+            status.setText(o.message);
         }
     }
 }
