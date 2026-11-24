@@ -31,8 +31,21 @@ final class StripperTest {
         if ((r.data[r.data.length - 2] & 0xff) != 0xFF || (r.data[r.data.length - 1] & 0xff) != 0xD9) { fails++; System.out.println("FAIL output does not end at EOI"); }
         if (MetadataStripper.strip(new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}) != null) { fails++; System.out.println("FAIL accepted garbage"); }
         fails += checkWebpOrientation();
+        fails += checkPngOrientation();
         System.out.println((fails == 0 ? "photo stripper: all checks passed" : "photo stripper: " + fails + " FAILED"));
         return fails;
+    }
+
+    /** Compare the entire PNG against an independently encoded orientation-only PNG, including its CRC. */
+    private static int checkPngOrientation() {
+        byte[] original = Base64.getDecoder().decode(
+                "iVBORw0KGgoAAAANSUhEUgAAAAIAAAADCAIAAAA2iEnWAAAADnRFWHRDb21tZW50AFNlY3JldGMGwB8AAAA2ZVhJZk1NACoAAAAIAAIBEAACAAAADwAAACYBEgADAAAAAQAGAAAAAAAARXhhbXBsZSBDYW1lcmEAAJe2DFQAAAAUSURBVHicY2Rg+M/AwMDEwMCAoAASQgEFkf1DqAAAAABJRU5ErkJggg==");
+        byte[] expected = Base64.getDecoder().decode(
+                "iVBORw0KGgoAAAANSUhEUgAAAAIAAAADCAIAAAA2iEnWAAAAGmVYSWZNTQAqAAAACAABARIAAwAAAAEABgAAAAAAANZnS2kAAAAUSURBVHicY2Rg+M/AwMDEwMCAoAASQgEFkf1DqAAAAABJRU5ErkJggg==");
+        MetadataStripper.Result result = MetadataStripper.strip(original);
+        if (result != null && java.util.Arrays.equals(result.data, expected)) return 0;
+        System.out.println("FAIL PNG must preserve orientation and pixels while removing camera model and text");
+        return 1;
     }
 
     /** Lossless 2x3 WebP with an orientation and a camera model. */

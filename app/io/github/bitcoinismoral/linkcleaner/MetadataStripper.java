@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.zip.CRC32;
 
 /**
  * Lossless photo metadata removal. The image data itself is copied byte-for-byte, so there is
@@ -17,7 +18,7 @@ import java.util.Set;
  *        profile, and re-adds a minimal EXIF containing ONLY the rotation so photos aren't
  *        shown sideways.
  *  PNG:  drops text chunks (tEXt/zTXt/iTXt, often software/author/creation data), eXIf, tIME and
- *        unknown ancillary chunks. Keeps colour/transparency/animation chunks.
+ *        unknown ancillary chunks. Keeps colour/transparency/animation chunks and display orientation.
  *  WebP: replaces EXIF with orientation only when needed, drops XMP and updates the RIFF header.
  * Other formats return null (the caller re-encodes them instead).
  */
@@ -192,14 +193,30 @@ public final class MetadataStripper {
         out.write(PNG_SIG, 0, 8);
         int i = 8;
         boolean sawEnd = false;
+        boolean wroteOrientation = false;
         while (i + 12 <= b.length) {
             int len = u32(b, i, false);
-            if (len < 0 || i + 12 + len > b.length) return null;
+            if (len < 0 || len > b.length - i - 12) return null;
             String type = ascii(b, i + 4, 4);
             boolean critical = Character.isUpperCase(type.charAt(0));
             boolean keep = critical || PNG_KEEP.contains(type);
             if (keep) out.write(b, i, 12 + len);
-            else if (type.equals("eXIf")) removed.add(CAMERA);
+            else if (type.equals("eXIf")) {
+                int[] exif = readExif(b, i + 8, i + 8 + len);
+                removed.add(CAMERA);
+                if (exif[1] != 0) removed.add(LOCATION);
+                if (!wroteOrientation && exif[0] >= 2 && exif[0] <= 8) {
+                    byte[] payload = orientationTiff(exif[0]);
+                    writePngInt(out, payload.length);
+                    out.write(b, i + 4, 4); // eXIf type
+                    out.write(payload, 0, payload.length);
+                    CRC32 crc = new CRC32();
+                    crc.update(b, i + 4, 4);
+                    crc.update(payload);
+                    writePngInt(out, (int) crc.getValue());
+                    wroteOrientation = true;
+                }
+            }
             else if (type.endsWith("TXt") || type.equals("tEXt")) removed.add(TEXT);
             else if (type.equals("tIME")) removed.add("timestamp");
             else removed.add(TEXT);
@@ -209,6 +226,13 @@ public final class MetadataStripper {
         if (!sawEnd) return null;
         if (i < b.length) removed.add(EMBEDDED);
         return new Result(out.toByteArray(), "png", "image/png", removed);
+    }
+
+    private static void writePngInt(ByteArrayOutputStream out, int value) {
+        out.write(value >>> 24);
+        out.write(value >>> 16);
+        out.write(value >>> 8);
+        out.write(value);
     }
 
     // ------------------------------------------------------------------ WebP
