@@ -4,7 +4,7 @@
 
 Removes surveillance junk from links and photos on Android — automatically, offline, with **no internet permission**.
 
-- **Automatic copy cleaning** — copy a link anywhere; it's cleaned on your clipboard before you paste.
+- **Automatic cleaning** — copy a link in an app and it's cleaned on your clipboard; paste a tracked link into any text box and the clean version is swapped in (covers links copied inside web pages, e.g. X's website in Vanadium).
 - **Link opener** — set as default browser app; every link you tap is cleaned and handed to your real browser.
 - **Photo metadata remover** — Share → "Remove photo metadata": strips GPS, phone model, timestamps, edit history and embedded Motion Photo video. Lossless for JPEG/PNG/WebP.
 - Also: Quick Settings tile, Share → "Clean links", Select text → "Clean links".
@@ -18,7 +18,7 @@ X/Twitter share trackers · YouTube `si`/`pp`/`feature` · AI-assistant tags on 
 ## Privacy
 
 - No `INTERNET` permission, no dependencies, no analytics. ~120 KB.
-- The accessibility service (optional, for automatic copy cleaning) has `canRetrieveWindowContent` off: it only sees the label of the button you tap ("Copy link") and Android's "Copied" notice. See [`CopyWatcherService.java`](app/io/github/bitcoinismoral/linkcleaner/CopyWatcherService.java).
+- The accessibility service (optional, for automatic cleaning) looks only at the label of a tapped "Copy" button, "Copied" notices, and text just pasted into a text box. It declares `canRetrieveWindowContent` solely to replace pasted text with the cleaned link, on the source of that one "text changed" event. See [`CopyWatcherService.java`](app/io/github/bitcoinismoral/linkcleaner/CopyWatcherService.java).
 - Cleaned photo copies are served read-only to the app you share with, via a non-exported provider, and deleted after an hour.
 
 ## Building

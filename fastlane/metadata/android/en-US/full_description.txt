@@ -1,7 +1,7 @@
 <p>Surveillance Slop Remover removes surveillance junk from links and photos, automatically and completely offline. It has <b>no internet permission</b>, so nothing you clean can ever leave your phone.</p>
 
 <p><b>Automatic copy cleaning</b><br/>
-Copy a link anywhere and it's cleaned on your clipboard within a split second, before you paste it. No need to open the app.</p>
+Copy a link in an app and it's cleaned on your clipboard within a split second. Paste a tracked link into any text box (a chat, an email, a post) and the clean version is swapped in automatically, which also covers links copied inside web pages. No need to open the app.</p>
 
 <p><b>Link opener</b><br/>
 Set Surveillance Slop Remover as your default browser app: every link you tap in other apps is cleaned and handed straight to your real browser (Vanadium, Firefox, …). You never see it.</p>
@@ -22,4 +22,4 @@ Share a photo → "Remove photo metadata" → choose where to send it. Strips GP
 <p>Also available: a Quick Settings tile, Share → "Clean links", and Select text → "Clean links".</p>
 
 <p><b>About the accessibility service</b><br/>
-Since Android 10 only the visible app can read the clipboard, so automatic copy cleaning uses an accessibility service. It is configured so it <b>cannot read screen content</b>: it only receives the label of the button you tap (e.g. "Copy link") and Android's own "Copied" notice, then briefly opens an invisible window to clean the clipboard. It is optional; every other feature works without it.</p>
+Since Android 10 only the visible app can read the clipboard, so automatic cleaning uses an accessibility service. It looks only at the label of a tapped "Copy" button, "Copied" notices, and text just pasted into a text box, which it replaces with the cleaned link. Replacing that text requires window-content access, so Android describes the service as able to view your screen; it does not browse the screen, and with no internet permission nothing can leave your phone. It is optional; every other feature works without it.</p>

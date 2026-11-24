@@ -38,7 +38,8 @@ public class MainActivity extends Activity {
             + "stops automatic cleaning. Tap the button \u2192 turn on clipboard access for this app "
             + "(the per-app clipboard / Secure Paste toggle). If you never changed it, it's already allowed.";
     private static final String COPY_ON =
-            "Every link you copy is cleaned automatically within a split second.";
+            "Links are cleaned automatically: when you copy them in apps, and when you paste them "
+            + "into any text box (e.g. a link copied on X's website in Vanadium, pasted into Signal).";
     private static final String STUCK =
             "Android has it switched on, but it isn't running yet. Open the settings below and turn "
             + "\"Use Surveillance Slop Remover\" off and on again. If it keeps happening, restart the phone.";
@@ -73,8 +74,10 @@ public class MainActivity extends Activity {
             + "Also: Quick Settings tile \"Clean links\", Share → \"Clean links\", "
             + "Select text → ⋮ → \"Clean links\".\n\n"
             + "Privacy: no internet permission, fully offline, open source (GPL-3.0). Automatic mode "
-            + "only sees the label of the button you tap (e.g. \"Copy link\") and Android's \"Copied\" "
-            + "notice — it cannot read your screen.";
+            + "looks only at the label of a tapped \"Copy\" button, \"Copied\" notices, and text you "
+            + "just pasted into a text box (to swap in the clean link). Android describes this "
+            + "accessibility access as able to view your screen; the app doesn't browse it, and with no "
+            + "internet permission nothing can leave the phone.";
 
     private static final int REQ_BROWSER_ROLE = 7;
     private static final int PAD = 64;

@@ -39,17 +39,17 @@ jobs:
       - name: Generated text manifest/icon are up to date
         run: |
           javac -nowarn -d out/bt buildtools/ResEncoder.java
-          java -cp out/bt ResEncoder --text android/AndroidManifest.xml res/drawable-anydpi-v26/ic_launcher.xml
-          git diff --exit-code -- android/AndroidManifest.xml res/drawable-anydpi-v26/ic_launcher.xml
+          java -cp out/bt ResEncoder --text android/AndroidManifest.xml res/drawable-anydpi-v26/ic_launcher.xml res/xml/accessibility_service.xml
+          git diff --exit-code -- android/AndroidManifest.xml res/drawable-anydpi-v26/ic_launcher.xml res/xml/accessibility_service.xml
           grep -q "versionCode $(grep -o 'VERSION_CODE = [0-9]*' buildtools/ResEncoder.java | grep -o '[0-9]*')" android/build.gradle
       - name: Dex + resources + unsigned APK
         run: |
           java -cp tools/r8.jar com.android.tools.r8.D8 --release --min-api 29 --lib "$JAVA_HOME" \
             --classpath out/stubs --output out/dex $(find out/classes -name '*.class')
-          cp -R res out/apk/res && rm out/apk/res/drawable-anydpi-v26/ic_launcher.xml
+          cp -R res out/apk/res && rm out/apk/res/drawable-anydpi-v26/ic_launcher.xml out/apk/res/xml/accessibility_service.xml
           java -cp out/bt ResEncoder out/apk
           cp out/dex/classes.dex out/apk/
-          (cd out/apk && zip -q -X -9 ../unsigned-oss.apk AndroidManifest.xml classes.dex res/drawable-anydpi-v26/ic_launcher.xml \
+          (cd out/apk && zip -q -X -9 ../unsigned-oss.apk AndroidManifest.xml classes.dex res/drawable-anydpi-v26/ic_launcher.xml res/xml/accessibility_service.xml \
             && zip -q -X -0 ../unsigned-oss.apk resources.arsc $(find res -name '*.png' | sort))
       - uses: actions/upload-artifact@v4
         with: { name: unsigned-oss-apk, path: out/unsigned-oss.apk }

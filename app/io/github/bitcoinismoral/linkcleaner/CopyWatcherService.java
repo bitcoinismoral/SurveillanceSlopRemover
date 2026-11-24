@@ -9,7 +9,9 @@ import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
+import android.os.Bundle;
 import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Toast;
 
 import java.util.List;
@@ -20,15 +22,16 @@ import java.util.Locale;
  * invisible 1x1 overlay that takes window focus (the only way Android 10+ allows reading the
  * clipboard), cleans it and removes itself. You keep copying and pasting exactly as before.
  *
- * Privacy: it can NOT read screen contents (canRetrieveWindowContent is off). It only receives
- * three event types and looks at nothing but the short label of what was tapped:
- *   - taps on buttons/menu items labelled "Copy", "Copy link", "Copy link address", ...
- *   - Android's own "Text copied" clipboard confirmation (SystemUI)
- * Nothing is stored, logged, or sent anywhere (the app has no internet permission).
+ * It also cleans at paste time (see cleanPastedText), which needs canRetrieveWindowContent so it
+ * can replace the text in the box you pasted into. That access is only used on the source of a
+ * "text changed" event that inserted a tracked link; the service never browses the screen.
+ * It looks at: labels of tapped "Copy" buttons, Android's/apps' "Copied" notices, and text just
+ * pasted into a text box. Nothing is stored or sent anywhere (no internet permission).
  */
 public class CopyWatcherService extends AccessibilityService {
 
     static volatile boolean running = false;
+    private static volatile boolean blockedWarned = false;
 
     static final String BLOCKED_MSG = "Surveillance Slop Remover can't read the clipboard. On GrapheneOS: "
             + "Settings \u2192 Apps \u2192 Surveillance Slop Remover \u2192 turn on clipboard access (Secure Paste).";
@@ -84,6 +87,7 @@ public class CopyWatcherService extends AccessibilityService {
         try {
             AccessibilityServiceInfo info = new AccessibilityServiceInfo();
             info.eventTypes = AccessibilityEvent.TYPE_VIEW_CLICKED
+                    | AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED // paste-time cleaning (3.5)
                     | AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
                     | AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED // "Copied" toasts
                     | AccessibilityEvent.TYPE_ANNOUNCEMENT;
@@ -124,6 +128,10 @@ public class CopyWatcherService extends AccessibilityService {
         if (SELF.equals(pkg)) return;
 
         int type = event.getEventType();
+        if (type == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED) {
+            cleanPastedText(event, pkg);
+            return;
+        }
         boolean trigger;
         if (type == AccessibilityEvent.TYPE_VIEW_CLICKED) {
             trigger = mentionsCopy(labelOf(event));
@@ -187,8 +195,11 @@ public class CopyWatcherService extends AccessibilityService {
                         Toast.makeText(CopyWatcherService.this, o.message, Toast.LENGTH_SHORT).show();
                     } else if (o.unreadable) {
                         // Something was just copied, so an empty read means access is blocked.
-                        log("clipboard access is blocked for this app");
-                        Toast.makeText(CopyWatcherService.this, BLOCKED_MSG, Toast.LENGTH_LONG).show();
+                        log("clipboard access is blocked for this app (paste-time cleaning still works)");
+                        if (!blockedWarned) {
+                            blockedWarned = true;
+                            Toast.makeText(CopyWatcherService.this, BLOCKED_MSG, Toast.LENGTH_LONG).show();
+                        }
                     }
                 } catch (Throwable t) {
                     log("clipboard read failed: " + t);
@@ -222,6 +233,54 @@ public class CopyWatcherService extends AccessibilityService {
                 removeQuietly(wm, probe);
             }
         }, 1500);
+    }
+
+    /**
+     * Paste-time cleaning (3.5). Copy-time detection can't see copies made inside web pages
+     * (e.g. X's website in Vanadium shows its own "Copied" banner and Android shows nothing), so
+     * we also act when a link lands in a text box: if a single change inserted 8+ characters
+     * (a paste, not typing) and that inserted part contains a tracked link, the text box gets the
+     * cleaned version and the clean link goes back on the clipboard. Only the source of this
+     * "text changed" event is touched; password fields are skipped; nothing is read otherwise.
+     */
+    private void cleanPastedText(AccessibilityEvent e, String pkg) {
+        int added = e.getAddedCount();
+        int from = e.getFromIndex();
+        if (added < 8 || from < 0) return;
+        List<CharSequence> texts = e.getText();
+        if (texts == null || texts.isEmpty() || texts.get(0) == null) return;
+        String text = texts.get(0).toString();
+        if (from + added > text.length()) return;
+        String inserted = text.substring(from, from + added);
+        if (!inserted.contains("http") && !inserted.contains(".com/") && !inserted.contains(".be/")) return;
+        LinkCleaner.Result r = LinkCleaner.clean(inserted);
+        if (r.linksCleaned == 0) return;
+
+        AccessibilityNodeInfo node = e.getSource();
+        if (node == null) { log("pasted dirty link in " + pkg + " but can't reach the text box"); return; }
+        if (!node.isEditable() || node.isPassword()) return;
+        CharSequence currentCs = node.getText();
+        String current = currentCs != null ? currentCs.toString() : text;
+        if (!current.regionMatches(from, inserted, 0, inserted.length())) {
+            int at = current.indexOf(inserted);           // text moved since the event; find it again
+            if (at < 0) return;
+            from = at;
+        }
+        String updated = current.substring(0, from) + r.text + current.substring(from + inserted.length());
+        Bundle setText = new Bundle();
+        setText.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, updated);
+        if (!node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, setText)) {
+            log("pasted dirty link in " + pkg + " but the text box refused the edit");
+            return;
+        }
+        int caret = from + r.text.length();
+        Bundle sel = new Bundle();
+        sel.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, caret);
+        sel.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, caret);
+        node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION, sel);
+        try { ClipboardHelper.write(this, r.text); } catch (Throwable ignored) {} // writing needs no focus
+        log("cleaned link pasted in " + pkg);
+        Toast.makeText(this, "Tracking removed from pasted link", Toast.LENGTH_SHORT).show();
     }
 
     private static void removeQuietly(WindowManager wm, View v) {

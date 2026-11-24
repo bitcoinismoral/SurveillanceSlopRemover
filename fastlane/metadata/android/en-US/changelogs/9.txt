@@ -1,0 +1,3 @@
+• New: paste-time cleaning. Paste a tracked link into any text box and the clean link is swapped in.
+  Fixes links copied inside web pages (e.g. X's website in Vanadium), which Android never reports as a copy.
+• Automatic cleaning now needs window-content access to edit the text box (see the privacy note)

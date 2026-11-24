@@ -15,8 +15,8 @@ import java.util.*;
 public class ResEncoder {
 
     static final String PKG = "io.github.bitcoinismoral.linkcleaner";
-    static final int VERSION_CODE = 8;
-    static final String VERSION_NAME = "3.4";
+    static final int VERSION_CODE = 9;
+    static final String VERSION_NAME = "3.5";
 
     // ---- framework attribute IDs (public-final.xml)
     static final Map<String, Integer> IDS = new HashMap<>();
@@ -40,6 +40,12 @@ public class ResEncoder {
         IDS.put("noHistory", 0x0101022d);
         IDS.put("targetSdkVersion", 0x01010270);
         IDS.put("allowBackup", 0x01010280);
+        IDS.put("resource", 0x01010025);
+        IDS.put("accessibilityEventTypes", 0x01010380);
+        IDS.put("accessibilityFeedbackType", 0x01010382);
+        IDS.put("notificationTimeout", 0x01010383);
+        IDS.put("accessibilityFlags", 0x01010384);
+        IDS.put("canRetrieveWindowContent", 0x01010385);
     }
     static final int THEME_DEVICE_DEFAULT_DAYNIGHT = 0x010302e3;
     static final int THEME_TRANSLUCENT_NOTITLEBAR = 0x01030010;
@@ -51,15 +57,18 @@ public class ResEncoder {
     static final String[] DENSITIES = {"mdpi", "hdpi", "xhdpi", "xxhdpi", "xxxhdpi"};
     static final int[] DENSITY_DPI = {160, 240, 320, 480, 640};
     static final String ADAPTIVE_PATH = "res/drawable-anydpi-v26/ic_launcher.xml";
+    static final int R_XML_A11Y = 0x7f020000;                 // type 2 = xml
+    static final String A11Y_PATH = "res/xml/accessibility_service.xml";
 
     // =====================================================================================
     // XML trees
 
     static final String NS = "http://schemas.android.com/apk/res/android";
-    static final int T_REF = 0x01, T_STR = 0x03, T_INT = 0x10, T_BOOL = 0x12;
+    static final int T_REF = 0x01, T_STR = 0x03, T_INT = 0x10, T_INT_HEX = 0x11, T_BOOL = 0x12;
 
     static final class Attr {
         final boolean android; final String name; final int type; final Object val;
+        String text; // symbolic form for the plain-text XML, e.g. "typeViewClicked|typeAnnouncement"
         Attr(boolean android, String name, int type, Object val) { this.android = android; this.name = name; this.type = type; this.val = val; }
         int resId() { if (!android) return 0; Integer id = IDS.get(name); if (id == null) throw new IllegalArgumentException("no ID for android:" + name); return id; }
     }
@@ -72,6 +81,7 @@ public class ResEncoder {
         El a(String n, boolean v) { attrs.add(new Attr(true, n, T_BOOL, v)); return this; }
         El ref(String n, int id) { attrs.add(new Attr(true, n, T_REF, id)); return this; }
         El plain(String n, String v) { attrs.add(new Attr(false, n, T_STR, v)); return this; }
+        El flags(String n, int v, String text) { Attr a = new Attr(true, n, T_INT_HEX, v); a.text = text; attrs.add(a); return this; }
         El k(El... e) { kids.addAll(Arrays.asList(e)); return this; }
     }
 
@@ -122,7 +132,23 @@ public class ResEncoder {
                 e("service").a("name", cls("CopyWatcherService")).a("exported", true)
                     .a("label", "Surveillance Slop Remover — auto-clean copied links")
                     .a("permission", "android.permission.BIND_ACCESSIBILITY_SERVICE").k(
-                    e("intent-filter").k(action("android.accessibilityservice.AccessibilityService")))));
+                    e("intent-filter").k(action("android.accessibilityservice.AccessibilityService")),
+                    e("meta-data").a("name", "android.accessibilityservice").ref("resource", R_XML_A11Y))));
+    }
+
+    /**
+     * Accessibility service config. canRetrieveWindowContent is needed (since 3.5) so the service
+     * can put the cleaned link into the text box you pasted into; it is only ever used on the
+     * source of a "text changed" event. It cannot be granted at runtime, only declared here.
+     */
+    static El a11yConfig() {
+        return e("accessibility-service")
+            .flags("accessibilityEventTypes", 0x1 | 0x10 | 0x20 | 0x40 | 0x4000,
+                "typeViewClicked|typeViewTextChanged|typeWindowStateChanged|typeNotificationStateChanged|typeAnnouncement")
+            .flags("accessibilityFeedbackType", 0x10, "feedbackGeneric")
+            .flags("accessibilityFlags", 0x2, "flagIncludeNotImportantViews")
+            .a("notificationTimeout", 100)
+            .a("canRetrieveWindowContent", true);
     }
 
     static El adaptiveIcon() {
@@ -224,21 +250,40 @@ public class ResEncoder {
     }
 
     /** One RES_TABLE_TYPE chunk: values[i] = global-pool string index for entry i, or -1 if absent. */
-    static byte[] typeChunk(byte[] config, int[] values) {
+    static byte[] typeChunk(byte[] config, int[] values) { return typeChunk(1, 0, config, values); }
+
+    static byte[] typeChunk(int typeId, int firstKey, byte[] config, int[] values) {
         int n = values.length, header = 20 + config.length, entriesStart = header + 4 * n;
         ByteArrayOutputStream offsets = new ByteArrayOutputStream(), entries = new ByteArrayOutputStream();
         for (int i = 0; i < n; i++) {
             if (values[i] < 0) { u32(offsets, -1); continue; }
             u32(offsets, entries.size());
-            u16(entries, 8); u16(entries, 0); u32(entries, i);                   // ResTable_entry: key = keyStrings[i]
+            u16(entries, 8); u16(entries, 0); u32(entries, firstKey + i);        // ResTable_entry: key index
             u16(entries, 8); u8(entries, 0); u8(entries, T_STR); u32(entries, values[i]); // Res_value: file path
         }
         ByteArrayOutputStream t = new ByteArrayOutputStream();
         u16(t, 0x0201); u16(t, header); u32(t, entriesStart + entries.size());
-        u8(t, 1); u8(t, 0); u16(t, 0); u32(t, n); u32(t, entriesStart);
+        u8(t, typeId); u8(t, 0); u16(t, 0); u32(t, n); u32(t, entriesStart);
         t.writeBytes(config);
         t.writeBytes(offsets.toByteArray()); t.writeBytes(entries.toByteArray());
         return t.toByteArray();
+    }
+
+    /** Interleave: spec(1), types(1)..., spec(2), types(2)... (each spec right before its types). */
+    static byte[] specAndTypes(byte[] specs, byte[] types) {
+        ByteArrayOutputStream o = new ByteArrayOutputStream();
+        int si = 0, ti = 0;
+        while (si < specs.length) {
+            int sSize = rd32(specs, si + 4); int typeId = specs[si + 8] & 0xff;
+            o.write(specs, si, sSize); si += sSize;
+            while (ti < types.length && (types[ti + 8] & 0xff) == typeId) {
+                int tSize = rd32(types, ti + 4); o.write(types, ti, tSize); ti += tSize;
+            }
+        }
+        return o.toByteArray();
+    }
+    static int rd32(byte[] b, int off) {
+        return (b[off] & 0xff) | ((b[off + 1] & 0xff) << 8) | ((b[off + 2] & 0xff) << 16) | ((b[off + 3] & 0xff) << 24);
     }
 
     static byte[] resourcesArsc() {
@@ -249,9 +294,13 @@ public class ResEncoder {
             values.add("res/drawable-" + d + "-v4/ic_mono.png");
             values.add("res/drawable-" + d + "-v4/ic_tile.png");
         }
+        int a11yValue = values.size();
+        values.add(A11Y_PATH);
         byte[] global = stringPool(values);
-        byte[] typeStrings = stringPool(Collections.singletonList("drawable"));
-        byte[] keyStrings = stringPool(Arrays.asList(ENTRIES));
+        byte[] typeStrings = stringPool(Arrays.asList("drawable", "xml"));
+        List<String> keys = new ArrayList<>(Arrays.asList(ENTRIES));
+        keys.add("accessibility_service");
+        byte[] keyStrings = stringPool(keys);
 
         ByteArrayOutputStream spec = new ByteArrayOutputStream();
         u16(spec, 0x0202); u16(spec, 16); u32(spec, 16 + 4 * ENTRIES.length);
@@ -265,6 +314,12 @@ public class ResEncoder {
             types.writeBytes(typeChunk(config(DENSITY_DPI[d], 4), new int[] {-1, base, base + 1, base + 2}));
         }
 
+        // type 2: xml/accessibility_service, default configuration only
+        u16(spec, 0x0202); u16(spec, 16); u32(spec, 16 + 4);
+        u8(spec, 2); u8(spec, 0); u16(spec, 0); u32(spec, 1);
+        u32(spec, 0);
+        types.writeBytes(typeChunk(2, ENTRIES.length, config(0, 0), new int[] {a11yValue}));
+
         int pkgHeader = 288;
         ByteArrayOutputStream pkg = new ByteArrayOutputStream();
         int pkgSize = pkgHeader + typeStrings.length + keyStrings.length + spec.size() + types.size();
@@ -275,12 +330,12 @@ public class ResEncoder {
         System.arraycopy(nb, 0, name, 0, Math.min(nb.length, 254));
         pkg.writeBytes(name);
         u32(pkg, pkgHeader);                        // typeStrings offset
-        u32(pkg, 1);                                // lastPublicType
+        u32(pkg, 2);                                // lastPublicType
         u32(pkg, pkgHeader + typeStrings.length);   // keyStrings offset
-        u32(pkg, ENTRIES.length);                   // lastPublicKey
+        u32(pkg, ENTRIES.length + 1);               // lastPublicKey
         u32(pkg, 0);                                // typeIdOffset
         pkg.writeBytes(typeStrings); pkg.writeBytes(keyStrings);
-        pkg.writeBytes(spec.toByteArray()); pkg.writeBytes(types.toByteArray());
+        pkg.writeBytes(specAndTypes(spec.toByteArray(), types.toByteArray()));
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         u16(out, 0x0002); u16(out, 12); u32(out, 12 + global.length + pkg.size()); u32(out, 1);
@@ -300,6 +355,7 @@ public class ResEncoder {
         REF_NAMES.put(THEME_DEVICE_DEFAULT_DAYNIGHT, "@android:style/Theme.DeviceDefault.DayNight");
         REF_NAMES.put(THEME_TRANSLUCENT_NOTITLEBAR, "@android:style/Theme.Translucent.NoTitleBar");
         REF_NAMES.put(COLOR_BLACK, "@android:color/black");
+        REF_NAMES.put(R_XML_A11Y, "@xml/accessibility_service");
     }
 
     /** Gradle sets package/version/SDK levels itself, so those are left out of the text manifest. */
@@ -318,6 +374,7 @@ public class ResEncoder {
             if (GRADLE_OWNED.contains(a.name)) continue;
             String v;
             if (a.type == T_REF) v = REF_NAMES.get((Integer) a.val);
+            else if (a.text != null) v = a.text;
             else if (a.type == T_BOOL) v = String.valueOf(a.val);
             else v = escape(String.valueOf(a.val));
             if (v == null) throw new IllegalStateException("no name for ref " + a.val);
@@ -337,9 +394,11 @@ public class ResEncoder {
     }
 
     public static void main(String[] args) throws Exception {
-        if (args.length == 3 && args[0].equals("--text")) {
+        if (args.length == 4 && args[0].equals("--text")) {
             Files.write(Paths.get(args[1]), textXml(manifest()).getBytes(StandardCharsets.UTF_8));
             Files.write(Paths.get(args[2]), textXml(adaptiveIcon()).getBytes(StandardCharsets.UTF_8));
+            Files.createDirectories(Paths.get(args[3]).getParent());
+            Files.write(Paths.get(args[3]), textXml(a11yConfig()).getBytes(StandardCharsets.UTF_8));
             System.out.println("wrote text manifest + adaptive icon");
             return;
         }
@@ -347,6 +406,8 @@ public class ResEncoder {
         Files.createDirectories(out.resolve("res/drawable-anydpi-v26"));
         Files.write(out.resolve("AndroidManifest.xml"), new AxmlWriter().encode(manifest()));
         Files.write(out.resolve(ADAPTIVE_PATH), new AxmlWriter().encode(adaptiveIcon()));
+        Files.createDirectories(out.resolve("res/xml"));
+        Files.write(out.resolve(A11Y_PATH), new AxmlWriter().encode(a11yConfig()));
         Files.write(out.resolve("resources.arsc"), resourcesArsc());
         System.out.println("wrote AndroidManifest.xml, " + ADAPTIVE_PATH + ", resources.arsc");
     }

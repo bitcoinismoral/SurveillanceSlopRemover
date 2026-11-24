@@ -32,12 +32,12 @@ java -cp "$OSS/r8.jar" com.android.tools.r8.D8 --release --min-api 29 \
 echo "== 5/8 resources: manifest, adaptive icon, resources.arsc"
 javac -nowarn -d "$OUT/bt" "$SRC/buildtools/ResEncoder.java"
 mkdir -p "$OUT/apk/res" && cp -R "$SRC/res/." "$OUT/apk/res/"
-rm -f "$OUT/apk/res/drawable-anydpi-v26/ic_launcher.xml"   # text version is for Gradle; ResEncoder writes the binary one
+rm -f "$OUT/apk/res/drawable-anydpi-v26/ic_launcher.xml" "$OUT/apk/res/xml/accessibility_service.xml"  # text versions are for Gradle; ResEncoder writes binary ones
 java -cp "$OUT/bt" ResEncoder "$OUT/apk"
 cp "$OUT/dex/classes.dex" "$OUT/apk/"
 
 echo "== 6/8 package (resources.arsc + PNGs stored uncompressed, as Android 11+ requires)"
-(cd "$OUT/apk" && zip -q -X -9 "$OUT/unsigned.apk" AndroidManifest.xml classes.dex res/drawable-anydpi-v26/ic_launcher.xml \
+(cd "$OUT/apk" && zip -q -X -9 "$OUT/unsigned.apk" AndroidManifest.xml classes.dex res/drawable-anydpi-v26/ic_launcher.xml res/xml/accessibility_service.xml \
   && zip -q -X -0 "$OUT/unsigned.apk" resources.arsc $(find res -name '*.png' | sort))
 
 echo "== 7/8 signing key"
