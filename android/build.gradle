@@ -45,8 +45,9 @@ android {
     }
 }
 
-// Pure-Java app with zero dependencies: make sure no Kotlin runtime is ever bundled.
-configurations.configureEach {
+// Pure-Java app with zero dependencies: keep the Kotlin runtime AGP 9 adds by default out of the
+// APK. Only the app's packaged classpaths are filtered; build tools such as lint keep theirs.
+configurations.matching { it.name ==~ /(release|debug)RuntimeClasspath/ }.configureEach {
     exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib'
     exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
     exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
