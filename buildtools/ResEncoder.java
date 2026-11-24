@@ -60,6 +60,14 @@ public class ResEncoder {
     static final int[] DENSITY_DPI = {160, 240, 320, 480, 640};
     static final String ADAPTIVE_PATH = "res/drawable-anydpi-v26/ic_launcher.xml";
     static final int R_XML_A11Y = 0x7f020000;                 // type 2 = xml
+    static final int R_STR_A11Y_SUMMARY = 0x7f030000;         // type 3 = string
+    static final int R_STR_A11Y_DESCRIPTION = 0x7f030001;
+    static final String[] STRING_KEYS = {"a11y_summary", "a11y_description"};
+    static final String A11Y_SUMMARY = "Removes tracking from links you copy and paste";
+    static final String A11Y_DESCRIPTION = "Removes tracking junk (like ?s=, si=, utm_ and fbclid) from links automatically. "
+        + "When you copy a link in an app, or paste one into a text box, the clean link replaces it.\n\n"
+        + "It only looks at \"Copy\" buttons, \"Copied\" notices and text you have just pasted. "
+        + "Surveillance Slop Remover has no internet permission, so nothing can leave your phone.";
     static final String A11Y_PATH = "res/xml/accessibility_service.xml";
 
     // =====================================================================================
@@ -152,11 +160,8 @@ public class ResEncoder {
             .a("notificationTimeout", 100)
             .a("canRetrieveWindowContent", true)
             // Shown on Android's accessibility settings page and in the "allow" dialog.
-            .a("summary", "Removes tracking from links you copy and paste")
-            .a("description", "Removes tracking junk (like ?s=, si=, utm_ and fbclid) from links automatically. "
-                + "When you copy a link in an app, or paste one into a text box, the clean link replaces it.\n\n"
-                + "It only looks at \"Copy\" buttons, \"Copied\" notices and text you have just pasted. "
-                + "Surveillance Slop Remover has no internet permission, so nothing can leave your phone.");
+            .ref("summary", R_STR_A11Y_SUMMARY)
+            .ref("description", R_STR_A11Y_DESCRIPTION);
     }
 
     static El adaptiveIcon() {
@@ -304,10 +309,15 @@ public class ResEncoder {
         }
         int a11yValue = values.size();
         values.add(A11Y_PATH);
+        int summaryValue = values.size();
+        values.add(A11Y_SUMMARY);
+        int descriptionValue = values.size();
+        values.add(A11Y_DESCRIPTION);
         byte[] global = stringPool(values);
-        byte[] typeStrings = stringPool(Arrays.asList("drawable", "xml"));
+        byte[] typeStrings = stringPool(Arrays.asList("drawable", "xml", "string"));
         List<String> keys = new ArrayList<>(Arrays.asList(ENTRIES));
         keys.add("accessibility_service");
+        keys.addAll(Arrays.asList(STRING_KEYS));
         byte[] keyStrings = stringPool(keys);
 
         ByteArrayOutputStream spec = new ByteArrayOutputStream();
@@ -328,6 +338,12 @@ public class ResEncoder {
         u32(spec, 0);
         types.writeBytes(typeChunk(2, ENTRIES.length, config(0, 0), new int[] {a11yValue}));
 
+        // type 3: string/a11y_summary, string/a11y_description, default configuration only
+        u16(spec, 0x0202); u16(spec, 16); u32(spec, 16 + 4 * STRING_KEYS.length);
+        u8(spec, 3); u8(spec, 0); u16(spec, 0); u32(spec, STRING_KEYS.length);
+        for (int i = 0; i < STRING_KEYS.length; i++) u32(spec, 0);
+        types.writeBytes(typeChunk(3, ENTRIES.length + 1, config(0, 0), new int[] {summaryValue, descriptionValue}));
+
         int pkgHeader = 288;
         ByteArrayOutputStream pkg = new ByteArrayOutputStream();
         int pkgSize = pkgHeader + typeStrings.length + keyStrings.length + spec.size() + types.size();
@@ -338,9 +354,9 @@ public class ResEncoder {
         System.arraycopy(nb, 0, name, 0, Math.min(nb.length, 254));
         pkg.writeBytes(name);
         u32(pkg, pkgHeader);                        // typeStrings offset
-        u32(pkg, 2);                                // lastPublicType
+        u32(pkg, 3);                                // lastPublicType
         u32(pkg, pkgHeader + typeStrings.length);   // keyStrings offset
-        u32(pkg, ENTRIES.length + 1);               // lastPublicKey
+        u32(pkg, ENTRIES.length + 1 + STRING_KEYS.length); // lastPublicKey
         u32(pkg, 0);                                // typeIdOffset
         pkg.writeBytes(typeStrings); pkg.writeBytes(keyStrings);
         pkg.writeBytes(specAndTypes(spec.toByteArray(), types.toByteArray()));
@@ -364,6 +380,8 @@ public class ResEncoder {
         REF_NAMES.put(THEME_TRANSLUCENT_NOTITLEBAR, "@android:style/Theme.Translucent.NoTitleBar");
         REF_NAMES.put(COLOR_BLACK, "@android:color/black");
         REF_NAMES.put(R_XML_A11Y, "@xml/accessibility_service");
+        REF_NAMES.put(R_STR_A11Y_SUMMARY, "@string/a11y_summary");
+        REF_NAMES.put(R_STR_A11Y_DESCRIPTION, "@string/a11y_description");
     }
 
     /** Gradle sets package/version/SDK levels itself, so those are left out of the text manifest. */
@@ -395,6 +413,21 @@ public class ResEncoder {
         b.append(ind).append("</").append(el.name).append(">\n");
     }
 
+    /** aapt2 string-resource escaping: backslash, quotes, apostrophes, newlines, then XML. */
+    static String aaptString(String v) {
+        String s = v.replace("\\", "\\\\").replace("\"", "\\\"").replace("'", "\\'").replace("\n", "\\n");
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+    }
+
+    static String stringsXml() {
+        return "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
+            + "<!-- Generated by buildtools/ResEncoder.java. Edit the strings there, not this file. -->\n"
+            + "<resources>\n"
+            + "    <string name=\"" + STRING_KEYS[0] + "\">" + aaptString(A11Y_SUMMARY) + "</string>\n"
+            + "    <string name=\"" + STRING_KEYS[1] + "\">" + aaptString(A11Y_DESCRIPTION) + "</string>\n"
+            + "</resources>\n";
+    }
+
     static String textXml(El root) {
         StringBuilder b = new StringBuilder("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
         b.append("<!-- Generated by buildtools/ResEncoder.java. Edit the tree there, not this file. -->\n");
@@ -403,7 +436,9 @@ public class ResEncoder {
     }
 
     public static void main(String[] args) throws Exception {
-        if (args.length == 4 && args[0].equals("--text")) {
+        if (args.length == 5 && args[0].equals("--text")) {
+            Files.createDirectories(Paths.get(args[4]).getParent());
+            Files.write(Paths.get(args[4]), stringsXml().getBytes(StandardCharsets.UTF_8));
             Files.write(Paths.get(args[1]), textXml(manifest()).getBytes(StandardCharsets.UTF_8));
             Files.write(Paths.get(args[2]), textXml(adaptiveIcon()).getBytes(StandardCharsets.UTF_8));
             Files.createDirectories(Paths.get(args[3]).getParent());

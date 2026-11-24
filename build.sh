@@ -32,7 +32,7 @@ java -cp "$OSS/r8.jar" com.android.tools.r8.D8 --release --min-api 29 \
 echo "== 5/8 resources: manifest, adaptive icon, resources.arsc"
 javac -nowarn -d "$OUT/bt" "$SRC/buildtools/ResEncoder.java"
 mkdir -p "$OUT/apk/res" && cp -R "$SRC/res/." "$OUT/apk/res/"
-rm -f "$OUT/apk/res/drawable-anydpi-v26/ic_launcher.xml" "$OUT/apk/res/xml/accessibility_service.xml"  # text versions are for Gradle; ResEncoder writes binary ones
+rm -rf "$OUT/apk/res/values" && rm -f "$OUT/apk/res/drawable-anydpi-v26/ic_launcher.xml" "$OUT/apk/res/xml/accessibility_service.xml"  # text versions are for Gradle; ResEncoder writes binary ones
 java -cp "$OUT/bt" ResEncoder "$OUT/apk"
 cp "$OUT/dex/classes.dex" "$OUT/apk/"
 
