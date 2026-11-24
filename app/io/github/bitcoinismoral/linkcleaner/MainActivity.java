@@ -57,7 +57,7 @@ public class MainActivity extends Activity {
             "Share any photo → \"Remove photo metadata\" → pick the app to send it to.\n"
             + "Removes GPS location, phone model, timestamps, edit history, comments and embedded "
             + "Motion Photo video. JPEG, PNG and WebP keep their exact original quality (no "
-            + "re-compression); the photo's rotation and colours are kept. Other formats (HEIC, AVIF) "
+            + "re-compression); the photo's rotation and colours are kept. GIFs keep their animation when supported. Other formats (HEIC, AVIF) "
             + "are re-saved as JPEG. Your original is never changed, and the clean copy gets a "
             + "neutral file name.";
 
