@@ -18,7 +18,7 @@ import java.util.Set;
  *        shown sideways.
  *  PNG:  drops text chunks (tEXt/zTXt/iTXt, often software/author/creation data), eXIf, tIME and
  *        unknown ancillary chunks. Keeps colour/transparency/animation chunks.
- *  WebP: drops EXIF and XMP chunks and fixes up the header flags and size.
+ *  WebP: replaces EXIF with orientation only when needed, drops XMP and updates the RIFF header.
  * Other formats return null (the caller re-encodes them instead).
  */
 public final class MetadataStripper {
@@ -93,7 +93,13 @@ public final class MetadataStripper {
 
             // the minimal rotation-only EXIF goes right after the JFIF header
             if (!exifWritten && m != 0xE0) {
-                if (orientation != 1) writeMinimalExif(out, orientation);
+                if (orientation != 1) {
+                        byte[] tiff = orientationTiff(orientation);
+                        byte[] header = {(byte) 0xFF, (byte) 0xE1, 0, (byte) (8 + tiff.length),
+                                'E', 'x', 'i', 'f', 0, 0};
+                        out.write(header, 0, header.length);
+                        out.write(tiff, 0, tiff.length);
+                    }
                 exifWritten = true;
             }
 
@@ -162,18 +168,15 @@ public final class MetadataStripper {
         return res;
     }
 
-    /** APP1 "Exif" with a single IFD0 entry: Orientation. Nothing else (34 bytes). */
-    static void writeMinimalExif(ByteArrayOutputStream out, int orientation) {
-        byte[] seg = {
-                (byte) 0xFF, (byte) 0xE1, 0x00, 0x22,
-                'E', 'x', 'i', 'f', 0, 0,
+    /** TIFF with one IFD0 entry and no other metadata. */
+    private static byte[] orientationTiff(int orientation) {
+        return new byte[] {
                 'M', 'M', 0x00, 0x2A, 0x00, 0x00, 0x00, 0x08, // big-endian TIFF header, IFD0 at 8
                 0x00, 0x01,                                     // 1 entry
                 0x01, 0x12, 0x00, 0x03, 0x00, 0x00, 0x00, 0x01, // tag 0x0112 SHORT x1
                 0x00, (byte) orientation, 0x00, 0x00,          // value
                 0x00, 0x00, 0x00, 0x00                          // no next IFD
         };
-        out.write(seg, 0, seg.length);
     }
 
     // ------------------------------------------------------------------ PNG
@@ -216,26 +219,43 @@ public final class MetadataStripper {
         ByteArrayOutputStream out = new ByteArrayOutputStream(b.length);
         out.write(b, 0, 12);
         int i = 12;
+        int flagsOffset = -1;
+        boolean wroteOrientation = false;
         while (i + 8 <= riffEnd) {
             String fourcc = ascii(b, i, 4);
             int size = u32(b, i + 4, true);
             int padded = size + (size & 1);
             if (size < 0 || i + 8 + size > b.length) return null;
             int chunkLen = Math.min(8 + padded, b.length - i);
-            if (fourcc.equals("EXIF")) { removed.add(CAMERA); }
+            if (fourcc.equals("EXIF")) {
+                removed.add(CAMERA);
+                int tiff = i + 8;
+                if (size >= 6 && ascii(b, tiff, 6).equals("Exif\0\0")) tiff += 6;
+                int orientation = readExif(b, tiff, i + 8 + size)[0];
+                if (!wroteOrientation && orientation >= 2 && orientation <= 8) {
+                    byte[] payload = orientationTiff(orientation);
+                    out.write(b, i, 4); // EXIF FourCC
+                    out.write(payload.length); // fixed even size, little endian
+                    out.write(0); out.write(0); out.write(0);
+                    out.write(payload, 0, payload.length);
+                    wroteOrientation = true;
+                }
+            }
             else if (fourcc.equals("XMP ")) { removed.add(XMP); }
             else {
                 int start = out.size();
                 out.write(b, i, chunkLen);
                 if (fourcc.equals("VP8X")) {
-                    byte[] cur = out.toByteArray();
-                    cur[start + 8] = (byte) (cur[start + 8] & ~0x0C); // clear EXIF + XMP flags
-                    out.reset(); out.write(cur, 0, cur.length);
+                    if (size < 10) return null;
+                    flagsOffset = start + 8;
                 }
             }
             i += 8 + padded;
         }
         byte[] r = out.toByteArray();
+        if (flagsOffset >= 0) {
+            r[flagsOffset] = (byte) ((r[flagsOffset] & ~0x0C) | (wroteOrientation ? 0x08 : 0));
+        }
         int riffSize = r.length - 8;
         r[4] = (byte) riffSize; r[5] = (byte) (riffSize >> 8); r[6] = (byte) (riffSize >> 16); r[7] = (byte) (riffSize >> 24);
         return new Result(r, "webp", "image/webp", removed);
