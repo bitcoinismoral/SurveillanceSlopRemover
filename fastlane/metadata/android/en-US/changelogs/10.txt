@@ -1,0 +1,3 @@
+• Paste-time cleaning: paste a tracked link into any text box and the clean link is swapped in
+  (covers links copied inside web pages, e.g. X's website in Vanadium)
+• Smaller build: no Kotlin runtime bundled
