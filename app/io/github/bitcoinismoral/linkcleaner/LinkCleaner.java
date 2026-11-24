@@ -66,10 +66,7 @@ public final class LinkCleaner {
 
     private static final Set<String> X_SEARCH_KEEP = set("q", "f", "src", "pf", "lf");
     private static final Set<String> YT_KEEP = set("v", "t", "list", "index", "start", "end",
-            "time_continue", "search_query", "c");
-    private static final Set<String> YT_EMBED_KEEP = new HashSet<>(YT_KEEP);
-    static { YT_EMBED_KEEP.add("cc_load_policy"); }
-
+            "time_continue", "search_query", "c", "cc_load_policy");
     private static final Set<String> GOOGLE_SEARCH_KEEP = set("q", "tbm", "udm", "start", "hl", "tbs",
             "num", "safe", "lr", "gl");
     private static final Set<String> BING_KEEP = set("q", "first", "setlang", "cc");
@@ -187,7 +184,7 @@ public final class LinkCleaner {
         } else if (is(host, "tiktok.com")) {
             dropQuery = true;
         } else if (is(host, "youtube.com", "youtu.be", "youtube-nocookie.com")) {
-            keepOnly = path.startsWith("/embed/") ? YT_EMBED_KEEP : YT_KEEP;
+            keepOnly = YT_KEEP;
         } else if (isGoogle(host) && path.equals("/search")) {
             keepOnly = GOOGLE_SEARCH_KEEP;
         } else if (is(host, "bing.com") && path.equals("/search")) {
