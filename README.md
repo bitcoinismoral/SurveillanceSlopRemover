@@ -19,11 +19,13 @@ Built for [GrapheneOS](https://grapheneos.org), works on any Android 10+.
 
 Tap the badge on your phone with [Obtainium](https://github.com/ImranR98/Obtainium) installed, then tap **Add** and **Install**. If the badge doesn't open Obtainium, add it by hand: Obtainium → **Add App** → paste `https://github.com/bitcoinismoral/SurveillanceSlopRemover` → **Add**.
 
+Prefer GitLab? Releases are mirrored there too: <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://gitlab.com/bitcoinismoral/SurveillanceSlopRemover">add from GitLab</a>, or paste `https://gitlab.com/bitcoinismoral/SurveillanceSlopRemover` into Obtainium. Use one source, not both.
+
 Installing through Obtainium also skips Android's "restricted setting" step for the accessibility service.
 
 ### Direct download
 
-[Latest release](https://github.com/bitcoinismoral/SurveillanceSlopRemover/releases/latest): download the APK and open it on your phone.
+[Latest release on GitHub](https://github.com/bitcoinismoral/SurveillanceSlopRemover/releases/latest) or [on GitLab](https://gitlab.com/bitcoinismoral/SurveillanceSlopRemover/-/releases): download the APK and open it on your phone. Both are the same signed APK.
 
 F-Droid: submission in progress.
 
