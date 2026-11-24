@@ -5,7 +5,8 @@ name: mirror to GitLab
 #
 # Dormant until configured (Settings -> Secrets and variables -> Actions):
 #   variable  GITLAB_PROJECT  e.g. bitcoinismoral/SurveillanceSlopRemover
-#   secret    GITLAB_TOKEN    GitLab project access token, role Maintainer, scopes: api, write_repository
+#   secret    GITLAB_TOKEN    GitLab personal access token with scopes api + write_repository
+#                             (gitlab.com -> Preferences -> Access tokens; project tokens need a paid tier)
 #
 # Runs on every published GitHub release; run it manually (Actions -> mirror to GitLab -> Run
 # workflow) to mirror an existing release, e.g. v3.6.
