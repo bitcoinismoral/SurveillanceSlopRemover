@@ -19,6 +19,7 @@ import java.util.Set;
  *  PNG:  drops text chunks (tEXt/zTXt/iTXt, often software/author/creation data), eXIf, tIME and
  *        unknown ancillary chunks. Keeps colour/transparency/animation chunks.
  *  WebP: drops EXIF and XMP chunks and fixes up the header flags and size.
+ * GIF: keeps image and playback blocks and removes non-rendering metadata.
  * Other formats return null (the caller re-encodes them instead).
  */
 public final class MetadataStripper {
@@ -39,6 +40,7 @@ public final class MetadataStripper {
     public static Result strip(byte[] in) {
         if (in == null || in.length < 12) return null;
         try {
+            if (GifStripper.recognizes(in)) return GifStripper.strip(in);
             if ((in[0] & 0xff) == 0xFF && (in[1] & 0xff) == 0xD8) return jpeg(in);
             if (startsWith(in, 0, PNG_SIG)) return png(in);
             if (ascii(in, 0, 4).equals("RIFF") && ascii(in, 8, 4).equals("WEBP")) return webp(in);
