@@ -61,6 +61,7 @@ public class StripActivity extends Activity {
                 if (r != null) {
                     data = r.data; ext = r.extension; type = r.mimeType; removed.addAll(r.removed);
                 } else {
+                    if (GifStripper.recognizes(in)) { failed++; continue; }
                     data = reencodeAsJpeg(in); ext = "jpg"; type = "image/jpeg";
                     removed.add("all metadata (re-saved as JPEG)");
                 }
@@ -83,7 +84,7 @@ public class StripActivity extends Activity {
     private void share(ArrayList<Uri> outputs, String mime, Set<String> removed, int failed) {
         try {
             if (outputs.isEmpty()) {
-                Toast.makeText(this, "Couldn't read that photo", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Couldn't read or clean that photo", Toast.LENGTH_LONG).show();
                 return;
             }
             String summary = removed.isEmpty() ? "No metadata found — sharing a clean copy"
@@ -134,7 +135,7 @@ public class StripActivity extends Activity {
         return out;
     }
 
-    /** For formats that can't be cleaned losslessly (HEIC, AVIF, GIF, ...): decode, fix rotation, save as JPEG. */
+    /** For formats that can't be cleaned losslessly (HEIC, AVIF, ...): decode, fix rotation, save as JPEG. */
     private static byte[] reencodeAsJpeg(byte[] in) throws Exception {
         int orientation = 1;
         try {

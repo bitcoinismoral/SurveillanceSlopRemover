@@ -6,7 +6,7 @@ Removes surveillance junk from links and photos on Android — automatically, of
 
 - **Automatic cleaning** — copy a link in an app and it's cleaned on your clipboard; paste a tracked link into any text box and the clean version is swapped in (covers links copied inside web pages, e.g. X's website in Vanadium).
 - **Link opener** — set as default browser app; every link you tap is cleaned and handed to your real browser.
-- **Photo metadata remover** — Share → "Remove photo metadata": strips GPS, phone model, timestamps, edit history and embedded Motion Photo video. Lossless for JPEG/PNG/WebP.
+- **Photo metadata remover** — Share → "Remove photo metadata": strips GPS, phone model, timestamps, edit history and embedded Motion Photo video. Lossless for JPEG/PNG/WebP. GIFs retain their frames, timing and looping while comments and application metadata are removed. GIFs with unsupported rendering features such as embedded colour profiles or plain text are skipped.
 - Also: Quick Settings tile, Share → "Clean links", Select text → "Clean links".
 
 Built for [GrapheneOS](https://grapheneos.org), works on any Android 10+.

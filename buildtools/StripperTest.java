@@ -32,6 +32,7 @@ final class StripperTest {
         if (MetadataStripper.strip(new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}) != null) { fails++; System.out.println("FAIL accepted garbage"); }
         fails += checkWebpOrientation();
         fails += checkPngOrientation();
+        fails += checkGif();
         System.out.println((fails == 0 ? "photo stripper: all checks passed" : "photo stripper: " + fails + " FAILED"));
         return fails;
     }
@@ -68,6 +69,38 @@ final class StripperTest {
         if (rd(data, ifd, 2, false) != 1 || rd(data, ifd + 2, 2, false) != 0x112
                 || rd(data, ifd + 10, 2, false) != 6) return 1;
         return 0;
+    }
+
+    // Two one-pixel frames with different delays, disposal, transparency, and a local palette.
+    private static int checkGif() {
+        String header = "47494638396101000100800000000000ffffff";
+        String loop = "21ff0b4e45545343415045322e300301030000";
+        String first = "21f90405050001002c0000000001000100000202440100";
+        String second = "21f904080a0000002c000000000100010080ff000000ff000202440100";
+        String comment = "21fe03616263016400";
+        String app = "21ff0b50524956415441505030310378797a00";
+        String clean = header + loop + first + second + "3b";
+        MetadataStripper.Result r = MetadataStripper.strip(hex(header + loop + comment + first + app + second + "3bffee"));
+        if (r == null || !"image/gif".equals(r.mimeType) || !"gif".equals(r.extension)
+                || !java.util.Arrays.equals(hex(clean), r.data) || r.removed.size() != 3) {
+            System.out.println("FAIL GIF animation or metadata filtering"); return 1;
+        }
+        String plainText = "21010c000000000100010001010100017800";
+        String profile = "21ff0b4943435247424731303132017800";
+        for (String unsupported : new String[] {header + plainText + first + "3b",
+                header + profile + first + "3b", header + first, header + "21fe0501"}) {
+            if (MetadataStripper.strip(hex(unsupported)) != null) {
+                System.out.println("FAIL accepted incomplete or unsupported GIF"); return 1;
+            }
+        }
+        return 0;
+    }
+
+    private static byte[] hex(String value) {
+        byte[] bytes = new byte[value.length() / 2];
+        for (int i = 0; i < bytes.length; i++)
+            bytes[i] = (byte) Integer.parseInt(value.substring(i * 2, i * 2 + 2), 16);
+        return bytes;
     }
 
     /** {orientation, hasGps} from the first APP1 Exif segment, or null. */

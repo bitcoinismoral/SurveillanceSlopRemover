@@ -68,6 +68,7 @@ public class CleanFileProvider extends ContentProvider {
     @Override
     public String getType(Uri uri) {
         String p = uri.toString().toLowerCase();
+        if (p.endsWith(".gif")) return "image/gif";
         if (p.endsWith(".png")) return "image/png";
         if (p.endsWith(".webp")) return "image/webp";
         return "image/jpeg";
