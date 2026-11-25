@@ -30,9 +30,45 @@ final class StripperTest {
         if (!r.removed.contains("GPS location")) { fails++; System.out.println("FAIL did not report GPS removal"); }
         if ((r.data[r.data.length - 2] & 0xff) != 0xFF || (r.data[r.data.length - 1] & 0xff) != 0xD9) { fails++; System.out.println("FAIL output does not end at EOI"); }
         if (MetadataStripper.strip(new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}) != null) { fails++; System.out.println("FAIL accepted garbage"); }
+        fails += checkWebpOrientation();
+        fails += checkPngOrientation();
         fails += checkGif();
         System.out.println((fails == 0 ? "photo stripper: all checks passed" : "photo stripper: " + fails + " FAILED"));
         return fails;
+    }
+
+    /** Compare the entire PNG against an independently encoded orientation-only PNG, including its CRC. */
+    private static int checkPngOrientation() {
+        byte[] original = Base64.getDecoder().decode(
+                "iVBORw0KGgoAAAANSUhEUgAAAAIAAAADCAIAAAA2iEnWAAAADnRFWHRDb21tZW50AFNlY3JldGMGwB8AAAA2ZVhJZk1NACoAAAAIAAIBEAACAAAADwAAACYBEgADAAAAAQAGAAAAAAAARXhhbXBsZSBDYW1lcmEAAJe2DFQAAAAUSURBVHicY2Rg+M/AwMDEwMCAoAASQgEFkf1DqAAAAABJRU5ErkJggg==");
+        byte[] expected = Base64.getDecoder().decode(
+                "iVBORw0KGgoAAAANSUhEUgAAAAIAAAADCAIAAAA2iEnWAAAAGmVYSWZNTQAqAAAACAABARIAAwAAAAEABgAAAAAAANZnS2kAAAAUSURBVHicY2Rg+M/AwMDEwMCAoAASQgEFkf1DqAAAAABJRU5ErkJggg==");
+        MetadataStripper.Result result = MetadataStripper.strip(original);
+        if (result != null && java.util.Arrays.equals(result.data, expected)) return 0;
+        System.out.println("FAIL PNG must preserve orientation and pixels while removing camera model and text");
+        return 1;
+    }
+
+    /** Lossless 2x3 WebP with an orientation and a camera model. */
+    private static int checkWebpOrientation() {
+        byte[] original = Base64.getDecoder().decode("UklGRmwAAABXRUJQVlA4WAoAAAAIAAAAAQAAAgAAVlA4TA8AAAAvAYAAAAdQwIj+ByKi/wEARVhJRjYAAABNTQAqAAAACAACARAAAgAAAA8AAAAmARIAAwAAAAEABgAAAAAAAEV4YW1wbGUgQ2FtZXJhAAA=");
+        MetadataStripper.Result clean = MetadataStripper.strip(original);
+        if (clean == null) return 1;
+        byte[] data = clean.data;
+        int exif = -1;
+        for (int i = 12; i + 8 <= data.length; ) {
+            int size = rd(data, i + 4, 4, true);
+            if (data[i] == 'E' && data[i + 1] == 'X' && data[i + 2] == 'I' && data[i + 3] == 'F') {
+                exif = i + 8;
+                if (size != 26) return 1;
+            }
+            i += 8 + size + (size & 1);
+        }
+        if (exif < 0 || (data[20] & 8) == 0 || rd(data, 4, 4, true) != data.length - 8) return 1;
+        int ifd = exif + rd(data, exif + 4, 4, false);
+        if (rd(data, ifd, 2, false) != 1 || rd(data, ifd + 2, 2, false) != 0x112
+                || rd(data, ifd + 10, 2, false) != 6) return 1;
+        return 0;
     }
 
     // Two one-pixel frames with different delays, disposal, transparency, and a local palette.
