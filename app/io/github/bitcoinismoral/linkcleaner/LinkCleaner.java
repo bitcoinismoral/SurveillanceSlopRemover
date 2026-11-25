@@ -66,7 +66,7 @@ public final class LinkCleaner {
 
     private static final Set<String> X_SEARCH_KEEP = set("q", "f", "src", "pf", "lf");
     private static final Set<String> YT_KEEP = set("v", "t", "list", "index", "start", "end",
-            "time_continue", "search_query", "c");
+            "time_continue", "search_query", "c", "cc_load_policy");
     private static final Set<String> GOOGLE_SEARCH_KEEP = set("q", "tbm", "udm", "start", "hl", "tbs",
             "num", "safe", "lr", "gl");
     private static final Set<String> BING_KEEP = set("q", "first", "setlang", "cc");

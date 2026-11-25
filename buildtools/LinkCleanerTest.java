@@ -25,6 +25,8 @@ public class LinkCleanerTest {
         // --- YouTube
         eq("https://www.youtube.com/watch?v=dQw4w9WgXcQ&pp=ygUEcmljaw%3D%3D&si=abc123&t=42",
            "https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=42");
+        eq("https://www.youtube.com/embed/M7lc1UVf-VE?si=demo&cc_load_policy=1",
+           "https://www.youtube.com/embed/M7lc1UVf-VE?cc_load_policy=1");
         eq("https://youtu.be/dQw4w9WgXcQ?si=XYZ_abc", "https://youtu.be/dQw4w9WgXcQ");
         eq("https://youtu.be/dQw4w9WgXcQ?si=XYZ&t=10", "https://youtu.be/dQw4w9WgXcQ?t=10");
         eq("https://youtube.com/shorts/abc123?si=x1&feature=share", "https://youtube.com/shorts/abc123");
